@@ -1,18 +1,16 @@
-PeraVanishCam — Versão clássica — Windows 64 bits
-
-Retorno à primeira versão (1.0.1): menu e efeito original de fumaça e tronco.
-Clones e transformação removidos. Ilustração do tronco restaurada com contornos
-mais limpos e transparência melhorada, mantendo o visual anime original.
-Mantidas as correções para fechar a webcam e recalibrar ao mudar a resolução.
+PeraVanishCam — Windows 64 bits
 
 1. Extraia o ZIP e abra PeraVanishCam.exe. Não é preciso instalar Python.
-2. Escolha 1 (Normal) ou 2 (Naruto).
+2. O efeito do tronco abre diretamente, como na primeira versão.
 3. Saia do enquadramento por 4 segundos para capturar o fundo.
-4. Volte e faça o gesto: V com os dedos no Normal; palmas juntas no Naruto.
+4. Volte e junte as palmas, com os dedos lado a lado e as duas mãos visíveis.
+   Ou pressione V. Você desaparece com fumaça e o tronco cai no cenário.
+
+A imagem do tronco tem mais definição e mantém o desenho e as cores originais.
 
 TECLAS: V desaparecer; R reaparecer; Espaço novo fundo; F tela cheia;
 Q ou Esc fechar. Clique na janela da câmera antes de utilizar o teclado.
-O som toca ao desaparecer no modo Naruto, inclusive ao pressionar V.
+O som toca ao desaparecer, inclusive ao pressionar V.
 
 SOM PERSONALIZADO
 Coloque som.mp3 ou som.wav na mesma pasta de PeraVanishCam.exe e reabra o

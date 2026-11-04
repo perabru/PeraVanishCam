@@ -21,7 +21,6 @@ if errorlevel 1 (
   if errorlevel 1 goto :error
 )
 
-if not exist "models\gesture_recognizer.task" goto :models
 if not exist "models\selfie_segmenter_landscape.tflite" goto :models
 goto :build
 

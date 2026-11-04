@@ -4,7 +4,7 @@
 
 1. Instale o [OBS Studio para Windows](https://obsproject.com/download), que inclui OBS Virtual Camera.
 2. Feche o OBS e as abas do Google Meet antes de abrir o PeraVanishCam.
-3. Abra `PeraVanishCam.exe` e escolha **2 — Naruto** para usar fumaça, tronco e som.
+3. Abra `PeraVanishCam.exe`. O efeito clássico de fumaça, tronco e som inicia diretamente.
 4. Saia do enquadramento durante 4 segundos. Quando o terminal informar que o fundo está pronto, volte.
 5. Abra o Meet e selecione **Configurações → Vídeo → Câmera → OBS Virtual Camera**.
 6. Mantenha o PeraVanishCam aberto durante a chamada. Neste modo, deixe o OBS fechado: o PeraVanishCam usa diretamente a câmera virtual.
@@ -33,7 +33,7 @@ A câmera virtual envia a imagem. Para misturar seu microfone com o som do PeraV
 | Meet: câmera | OBS Virtual Camera |
 
 7. No Meet, desative **Cancelamento de ruído**, se essa opção estiver disponível. Ele pode remover efeitos sonoros e outros sons que não sejam voz.
-8. Com o PeraVanishCam aberto no modo Naruto, pressione **V** na janela da câmera. Você deve ouvir o efeito e ver atividade no medidor de microfone do Meet.
+8. Com o PeraVanishCam aberto, pressione **V** na janela da câmera. Você deve ouvir o efeito e ver atividade no medidor de microfone do Meet.
 9. Teste com outro participante, preferencialmente usando fones.
 
 **Evitar eco:** mantenha os alto-falantes do Meet no fone físico. Se o áudio recebido do Meet entrar novamente na coluna VAIO enviada ao B1, os participantes poderão ouvir a própria voz de volta.
@@ -44,11 +44,11 @@ Ao terminar, você pode voltar a saída de som do Windows para seu fone e o micr
 
 ## 3. Trocar o efeito sonoro
 
-O som toca no modo **Naruto**, tanto pelo gesto de mãos juntas quanto pela tecla **V**. O modo Normal mantém o efeito visual de dissolução.
+O som toca junto ao efeito do tronco, tanto pelo gesto de mãos juntas quanto pela tecla **V**.
 
 1. Feche o PeraVanishCam.
 2. Coloque um arquivo de áudio chamado **som.mp3** ou **som.wav** na mesma pasta de `PeraVanishCam.exe`.
-3. Abra o programa novamente e escolha Naruto. O arquivo externo será utilizado automaticamente.
+3. Abra o programa novamente. O arquivo externo será utilizado automaticamente.
 4. Se existirem os dois arquivos, `som.mp3` tem prioridade. Para voltar ao som incluído no programa, remova ou renomeie os arquivos externos.
 
 Também é possível indicar outro nome ou caminho em um terminal aberto na pasta do programa:
@@ -71,7 +71,7 @@ Clique na janela da câmera antes de usar o teclado.
 
 | Tecla | Função |
 | --- | --- |
-| V | Desaparecer e, no modo Naruto, tocar o som |
+| V | Desaparecer, mostrar o tronco e tocar o som |
 | R | Reaparecer |
 | Espaço | Capturar o fundo novamente; saia do quadro por 4 segundos |
 | F | Alternar tela cheia |

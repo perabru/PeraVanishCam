@@ -1,4 +1,4 @@
-"""Webcam locale: dissolvenza avviata dal gesto con indice e medio a V."""
+"""PeraVanishCam: substituicao classica por tronco com as maos juntas."""
 
 from __future__ import annotations
 
@@ -77,7 +77,7 @@ def positive_fps(value: str) -> float:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Escolha o efeito Normal ou Naruto para sua webcam."
+        description="Substituicao classica por tronco para sua webcam."
     )
     parser.add_argument("--camera", type=int, default=0, help="Numero da webcam (0 = primeira camera)")
     parser.add_argument("--width", type=int, default=960, help="Largura do video")
@@ -99,8 +99,8 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--virtual-device", help="Nome do dispositivo de camera virtual")
     parser.add_argument(
-        "--mode", choices=("normal", "naruto"),
-        help="Abrir diretamente o modo normal ou naruto",
+        "--mode", choices=("naruto",), default="naruto",
+        help="Efeito de substituicao por tronco (padrao: naruto)",
     )
     parser.add_argument(
         "--gesture-debug", action="store_true",
@@ -110,51 +110,6 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--som", dest="sound", type=Path, help="Arquivo MP3 ou WAV para o efeito Naruto")
     parser.add_argument("--teste-som", action="store_true", help="Tocar o efeito uma vez, sem abrir a camera")
     return parser.parse_args()
-
-
-def choose_mode() -> str | None:
-    """Simple keyboard/mouse menu shown before the clean camera feed."""
-    title = "PeraVanishCam - Escolha o efeito"
-    selected = [None]
-    window = np.zeros((420, 700, 3), dtype=np.uint8)
-    window[:] = (26, 29, 34)
-    cv2.putText(window, "PERAVANISHCAM", (68, 88),
-                cv2.FONT_HERSHEY_SIMPLEX, 0.85, (236, 239, 242), 2, cv2.LINE_AA)
-    buttons = (
-        ("normal", "1  NORMAL VANISH", "Gesto em V  /  dissolver imagem", 140),
-        ("naruto", "2  NARUTO VANISH", "Maos juntas  /  tronco e fumaca", 260),
-    )
-    for mode, heading, detail, top in buttons:
-        cv2.rectangle(window, (65, top), (635, top + 94), (48, 54, 62), -1, cv2.LINE_AA)
-        cv2.rectangle(window, (65, top), (635, top + 94), (111, 142, 153), 2, cv2.LINE_AA)
-        cv2.putText(window, heading, (90, top + 38),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.77, (240, 245, 247), 2, cv2.LINE_AA)
-        cv2.putText(window, detail, (90, top + 68),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.53, (179, 195, 201), 1, cv2.LINE_AA)
-
-    def on_mouse(event, x, y, flags, userdata):
-        if event == cv2.EVENT_LBUTTONUP and 65 <= x <= 635:
-            for mode, _, _, top in buttons:
-                if top <= y <= top + 94:
-                    selected[0] = mode
-
-    cv2.namedWindow(title, cv2.WINDOW_AUTOSIZE)
-    cv2.setMouseCallback(title, on_mouse)
-    try:
-        while selected[0] is None:
-            cv2.imshow(title, window)
-            key = cv2.waitKey(30) & 0xFF
-            if key == ord("1"):
-                selected[0] = "normal"
-            elif key == ord("2"):
-                selected[0] = "naruto"
-            elif key in (ord("q"), 27):
-                return None
-            if cv2.getWindowProperty(title, cv2.WND_PROP_VISIBLE) < 1:
-                return None
-        return selected[0]
-    finally:
-        cv2.destroyWindow(title)
 
 
 def open_virtual_camera(args: argparse.Namespace, width: int, height: int):
@@ -190,7 +145,7 @@ def send_virtual_frame(camera, frame: np.ndarray) -> None:
     camera.send(np.ascontiguousarray(frame))
 
 
-def download_models(mode: str = "normal") -> None:
+def download_models(mode: str = "naruto") -> None:
     MODEL_DIR.mkdir(parents=True, exist_ok=True)
     for destination, url in MODEL_URLS.items():
         if mode == "naruto" and destination == GESTURE_MODEL:
@@ -244,7 +199,7 @@ def open_camera(index: int, width: int, height: int) -> cv2.VideoCapture:
     return capture
 
 
-def create_tasks(mode: str = "normal") -> tuple[vision.ImageSegmenter, MultiViewGestureRecognizer | MultiViewHandLandmarker]:
+def create_tasks(mode: str = "naruto") -> tuple[vision.ImageSegmenter, MultiViewGestureRecognizer | MultiViewHandLandmarker]:
     segmenter_options = vision.ImageSegmenterOptions(
         base_options=python.BaseOptions(model_asset_path=str(SEGMENTER_MODEL)),
         running_mode=vision.RunningMode.VIDEO,
@@ -636,7 +591,7 @@ def set_fullscreen(enabled: bool) -> None:
 
 def self_test() -> int:
     """Check bundled resources and model initialization without opening a webcam."""
-    required = (SEGMENTER_MODEL, GESTURE_MODEL, HAND_MODEL, SOUND_PATH)
+    required = (SEGMENTER_MODEL, HAND_MODEL, SOUND_PATH)
     missing = [path.name for path in required if not path.is_file()]
     if missing:
         raise RuntimeError(f"Arquivos necessarios ausentes: {', '.join(missing)}")
@@ -656,7 +611,7 @@ def self_test() -> int:
             os.environ.pop("SDL_AUDIODRIVER", None)
         else:
             os.environ["SDL_AUDIODRIVER"] = previous_driver
-    for mode in ("normal", "naruto"):
+    for mode in ("naruto",):
         segmenter, recognizer = create_tasks(mode)
         try:
             recognizer.close()
@@ -679,9 +634,7 @@ def run() -> int:
         finally:
             sound.close()
         return 0
-    mode = args.mode or choose_mode()
-    if mode is None:
-        return 0
+    mode = args.mode or "naruto"
     with ExitStack() as resources:
         return run_camera(args, resources, mode)
 
@@ -746,8 +699,6 @@ def run_camera(args: argparse.Namespace, resources: ExitStack, mode: str) -> int
             now = time.perf_counter()
             current_shape = (height, width)
             if frame_shape is not None and current_shape != frame_shape:
-                # A driver can renegotiate its frame size after opening. The
-                # old background/masks cannot be composited with the new size.
                 background = None
                 background_samples.clear()
                 state.phase = "calibrating"
@@ -879,6 +830,7 @@ def run_camera(args: argparse.Namespace, resources: ExitStack, mode: str) -> int
                 state.calibration_started = now
                 state.vanish_started = None
                 log_anchor = None
+                log_cache.clear()
                 last_mask = None
                 last_mask_at = float("-inf")
                 vanished_frame = None
@@ -891,6 +843,7 @@ def run_camera(args: argparse.Namespace, resources: ExitStack, mode: str) -> int
                     state.vanish_started = None
                     vanished_frame = None
                     log_anchor = None
+                    log_cache.clear()
                     last_mask = None
                     last_mask_at = float("-inf")
             elif key == ord("v") and background is not None:

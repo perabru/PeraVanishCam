@@ -1,32 +1,22 @@
-<p align="center"><img src="assets/peravanishcam-banner.svg" alt="PeraVanishCam — por Bruno Michel Pera" width="100%"></p>
-
 # PeraVanishCam
 
-**Versão mantida e personalizada por Bruno Michel Pera.** Efeitos de desaparecimento para webcam, reconhecimento por gestos e som personalizado, com instruções em português.
+<p align="center"><strong>Download direto · Windows 64 bits · Não precisa instalar Python</strong><br>
+<a href="https://github.com/perabru/PeraVanishCam/releases/latest/download/PeraVanishCam.exe"><strong>Clique aqui para baixar PeraVanishCam.exe</strong></a> · <a href="https://github.com/perabru/PeraVanishCam/releases/latest/download/PeraVanishCam-Windows-x64.zip">Pacote ZIP com os guias</a></p>
 
-[Baixar para Windows](https://github.com/perabru/PeraVanishCam/releases/latest) · [Instalar e começar](docs/INSTALACAO_E_USO.md) · [Usar no Google Meet](GUIA_GOOGLE_MEET_PTBR.md) · [Apoiar com Pix](#apoie-com-pix)
+<p align="center"><img src="assets/peravanishcam-banner.svg" alt="PeraVanishCam — por Bruno Michel Pera" width="100%"></p>
 
-## Versão clássica restaurada
+**Versão mantida e personalizada por Bruno Michel Pera.** Substituição em tronco para webcam, com o efeito clássico da primeira versão, reconhecimento por mãos juntas e som personalizado. A imagem do tronco foi aprimorada mantendo o desenho e as cores originais.
 
-Esta edição retoma o menu, os gestos, a fumaça e a queda do tronco da primeira
-versão (1.0.1). Os modos de clones e de transformação foram removidos.
-O tronco mantém a ilustração original em verde suave, agora com contornos mais
-limpos, detalhes de madeira mais nítidos e composição com transparência sem halo.
+[Baixar o executável (.exe)](https://github.com/perabru/PeraVanishCam/releases/latest/download/PeraVanishCam.exe) · [Instalar e começar](docs/INSTALACAO_E_USO.md) · [Usar no Google Meet](GUIA_GOOGLE_MEET_PTBR.md) · [Apoiar com Pix](#apoie-com-pix)
 
-**[Baixar PeraVanishCam.exe](https://github.com/perabru/PeraVanishCam/releases/latest/download/PeraVanishCam.exe)**
+## Começar em quatro passos
 
-## Começar em cinco passos
+1. Clique em **[BAIXAR EXECUTÁVEL PARA WINDOWS (.EXE)](https://github.com/perabru/PeraVanishCam/releases/latest/download/PeraVanishCam.exe)** no início desta página.
+2. Abra **PeraVanishCam.exe** com dois cliques. A versão pronta não precisa de Python. Se preferir o pacote ZIP com os guias, extraia todos os arquivos antes de abrir.
+3. O efeito do tronco abre diretamente. Saia do enquadramento por **4 segundos** para capturar o fundo. Depois volte.
+4. Junte as palmas, com os dedos lado a lado e as duas mãos visíveis, ou pressione **V** na janela da câmera.
 
-1. Em **[Releases](https://github.com/perabru/PeraVanishCam/releases/latest)**, baixe **PeraVanishCam-Windows-x64.zip**.
-2. Extraia todos os arquivos e abra **PeraVanishCam.exe**. A versão pronta não precisa de Python.
-3. Escolha **1 — Normal** ou **2 — Naruto**.
-4. Saia do enquadramento por **4 segundos** para capturar o fundo. Depois volte.
-5. Faça o gesto do modo escolhido ou pressione **V** na janela da câmera.
-
-| Modo | Como ativar | Efeito |
-| --- | --- | --- |
-| Normal | Indicador e médio formando V | Desaparecimento gradual |
-| Naruto | Palmas juntas, dedos lado a lado, duas mãos visíveis | Fumaça, tronco e som ao desaparecer |
+Você desaparece com a fumaça original, o tronco cai e permanece no cenário. Pressione **R** para reaparecer.
 
 O vídeo é processado no seu computador. O aplicativo não grava a câmera nem envia suas imagens para servidores. Depois de baixar o executável, os modelos necessários já estão no pacote.
 
@@ -38,7 +28,7 @@ O vídeo é processado no seu computador. O aplicativo não grava a câmera nem 
 
 | Tecla | Ação |
 | --- | --- |
-| V | Ativar o efeito; no Naruto também toca o som |
+| V | Ativar o efeito do tronco e tocar o som |
 | R | Reaparecer |
 | Espaço | Capturar novamente o fundo; saia do quadro por 4 segundos |
 | F | Alternar tela cheia |
@@ -48,7 +38,7 @@ Clique na janela da câmera antes de usar as teclas. Mantenha a câmera parada d
 
 ## Personalizar o som
 
-Coloque **som.mp3** ou **som.wav** na mesma pasta de **PeraVanishCam.exe** e reabra o aplicativo. O arquivo será utilizado no modo Naruto. Se os dois existirem, o MP3 tem prioridade. Remova ou renomeie o arquivo para voltar ao som padrão.
+Coloque **som.mp3** ou **som.wav** na mesma pasta de **PeraVanishCam.exe** e reabra o aplicativo. O arquivo será utilizado no efeito do tronco. Se os dois existirem, o MP3 tem prioridade. Remova ou renomeie o arquivo para voltar ao som padrão.
 
 Use **TESTAR_SOM.bat** para testar o áudio sem abrir a câmera.
 

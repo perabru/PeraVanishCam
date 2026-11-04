@@ -142,7 +142,7 @@ class EffectTests(unittest.TestCase):
         np.testing.assert_array_equal(output, expected)
 
 
-class MenuTests(unittest.TestCase):
+class StartupTests(unittest.TestCase):
     def test_removed_effects_cannot_be_selected_from_command_line(self):
         for mode in ("clones", "transformation"):
             with self.subTest(mode=mode), patch("sys.argv", ["PeraVanishCam", "--mode", mode]), patch("sys.stderr", new_callable=io.StringIO):
@@ -152,17 +152,12 @@ class MenuTests(unittest.TestCase):
         with patch("sys.argv", ["PeraVanishCam", "--mode", "naruto"]):
             self.assertEqual(app.parse_args().mode, "naruto")
 
-    def test_keyboard_selection(self):
-        with ExitStack() as mocks:
-            mocks.enter_context(patch.object(app.cv2, "getWindowProperty", return_value=1))
-            mocks.enter_context(patch.object(app.cv2, "namedWindow"))
-            mocks.enter_context(patch.object(app.cv2, "setMouseCallback"))
-            mocks.enter_context(patch.object(app.cv2, "imshow"))
-            mocks.enter_context(patch.object(app.cv2, "destroyWindow"))
-            key = mocks.enter_context(patch.object(app.cv2, "waitKey", return_value=ord("2")))
-            self.assertEqual(app.choose_mode(), "naruto")
-            key.return_value = ord("1")
-            self.assertEqual(app.choose_mode(), "normal")
+    def test_default_starts_classic_substitution_directly(self):
+        with patch("sys.argv", ["PeraVanishCam"]):
+            self.assertEqual(app.parse_args().mode, "naruto")
+        with patch("sys.argv", ["PeraVanishCam", "--mode", "normal"]), patch("sys.stderr"):
+            with self.assertRaises(SystemExit):
+                app.parse_args()
 
 
 class NarutoVideoLoopTests(unittest.TestCase):

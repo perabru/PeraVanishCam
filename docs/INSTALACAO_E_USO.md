@@ -20,14 +20,12 @@ O pacote é portátil. Para mudar de pasta, copie a pasta extraída inteira. Par
 ## Primeira execução
 
 1. Feche outros aplicativos que estejam utilizando sua webcam.
-2. Escolha o modo **Normal** ou **Naruto** no menu.
+2. Abra o aplicativo; o efeito do tronco inicia diretamente.
 3. Saia completamente do enquadramento durante 4 segundos.
 4. Aguarde a mensagem **Fundo pronto** no terminal.
 5. Volte para a câmera, mantendo o cenário e a iluminação estáveis.
 
-**Normal:** forme um V com os dedos indicador e médio.
-
-**Naruto:** junte as palmas com os dedos lado a lado, sem entrelaçar. Mantenha as duas mãos visíveis. A pessoa desaparece com fumaça, um tronco aparece e o efeito sonoro é reproduzido.
+Junte as palmas com os dedos lado a lado, sem entrelaçar. Mantenha as duas mãos visíveis. A pessoa desaparece com a fumaça clássica da primeira versão, o tronco cai e o efeito sonoro é reproduzido. A imagem mantém o desenho original com mais definição.
 
 ## Teclas
 
@@ -45,7 +43,7 @@ Clique na janela da câmera antes de usar o teclado. Ao capturar novamente o fun
 
 1. Feche o aplicativo.
 2. Coloque um arquivo **som.mp3** ou **som.wav** ao lado de **PeraVanishCam.exe**.
-3. Abra o aplicativo e escolha Naruto.
+3. Abra o aplicativo novamente.
 4. Pressione V para conferir o efeito com o som.
 
 O MP3 tem prioridade se os dois arquivos estiverem presentes. Para voltar ao áudio padrão, remova ou renomeie os arquivos externos. Use **TESTAR_SOM.bat** para ouvir o som sem abrir a câmera.
@@ -71,7 +69,7 @@ Siga o [guia completo](../GUIA_GOOGLE_MEET_PTBR.md). Ele explica como instalar a
 | Nenhuma imagem | Confira as permissões de câmera do Windows e teste outra câmera com `--camera 1` |
 | Fundo ficou com sua imagem | Pressione Espaço e saia totalmente do quadro por 4 segundos |
 | Gesto não reconhecido | Melhore a iluminação e mantenha a mão visível; use V para testar o efeito |
-| Som não toca | Escolha Naruto, confira volume e dispositivo de saída e execute TESTAR_SOM.bat |
+| Som não toca | Confira volume e dispositivo de saída e execute TESTAR_SOM.bat |
 | Meet não recebe o vídeo | Instale OBS Studio, reabra o navegador e escolha OBS Virtual Camera |
 | Meet não recebe o efeito sonoro | Configure o áudio virtual conforme o guia do Meet |
 

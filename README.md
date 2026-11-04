@@ -1,15 +1,21 @@
-<p align="center"><img src="assets/peravanishcam-banner.svg" alt="PeraVanishCam — por Bruno Michel Pera" width="100%"></p>
-
 # PeraVanishCam
+
+<p align="center">
+  <a href="https://github.com/perabru/PeraVanishCam/releases/latest/download/PeraVanishCam.exe"><img src="assets/baixar-executavel.svg" alt="BAIXAR EXECUTÁVEL PARA WINDOWS (.EXE)" width="640"></a>
+</p>
+<p align="center"><strong>Download direto · Windows 64 bits · Não precisa instalar Python</strong><br>
+<a href="https://github.com/perabru/PeraVanishCam/releases/latest/download/PeraVanishCam.exe"><strong>Clique aqui para baixar PeraVanishCam.exe</strong></a> · <a href="https://github.com/perabru/PeraVanishCam/releases/latest/download/PeraVanishCam-Windows-x64.zip">Pacote ZIP com os guias</a></p>
+
+<p align="center"><img src="assets/peravanishcam-banner.svg" alt="PeraVanishCam — por Bruno Michel Pera" width="100%"></p>
 
 **Versão mantida e personalizada por Bruno Michel Pera.** Efeitos de desaparecimento para webcam, reconhecimento por gestos e som personalizado, com instruções em português.
 
-[Baixar para Windows](https://github.com/perabru/PeraVanishCam/releases/latest) · [Instalar e começar](docs/INSTALACAO_E_USO.md) · [Usar no Google Meet](GUIA_GOOGLE_MEET_PTBR.md) · [Apoiar com Pix](#apoie-com-pix)
+[Baixar o executável (.exe)](https://github.com/perabru/PeraVanishCam/releases/latest/download/PeraVanishCam.exe) · [Instalar e começar](docs/INSTALACAO_E_USO.md) · [Usar no Google Meet](GUIA_GOOGLE_MEET_PTBR.md) · [Apoiar com Pix](#apoie-com-pix)
 
 ## Começar em cinco passos
 
-1. Em **[Releases](https://github.com/perabru/PeraVanishCam/releases/latest)**, baixe **PeraVanishCam-Windows-x64.zip**.
-2. Extraia todos os arquivos e abra **PeraVanishCam.exe**. A versão pronta não precisa de Python.
+1. Clique em **[BAIXAR EXECUTÁVEL PARA WINDOWS (.EXE)](https://github.com/perabru/PeraVanishCam/releases/latest/download/PeraVanishCam.exe)** no início desta página.
+2. Abra **PeraVanishCam.exe** com dois cliques. A versão pronta não precisa de Python. Se preferir o pacote ZIP com os guias, extraia todos os arquivos antes de abrir.
 3. Escolha **1 — Normal** ou **2 — Naruto**.
 4. Saia do enquadramento por **4 segundos** para capturar o fundo. Depois volte.
 5. Faça o gesto do modo escolhido ou pressione **V** na janela da câmera.

@@ -1,0 +1,43 @@
+PeraVanishCam — Windows 64 bits
+
+1. Extraia o ZIP e abra PeraVanishCam.exe. Não é preciso instalar Python.
+2. Escolha 1 (Normal) ou 2 (Naruto).
+3. Saia do enquadramento por 4 segundos para capturar o fundo.
+4. Volte e faça o gesto: V com os dedos no Normal; palmas juntas no Naruto.
+
+TECLAS: V desaparecer; R reaparecer; Espaço novo fundo; F tela cheia;
+Q ou Esc fechar. Clique na janela da câmera antes de utilizar o teclado.
+O som toca ao desaparecer no modo Naruto, inclusive ao pressionar V.
+
+SOM PERSONALIZADO
+Coloque som.mp3 ou som.wav na mesma pasta de PeraVanishCam.exe e reabra o
+programa. O MP3 tem prioridade se existirem os dois. Remova ou renomeie
+o arquivo externo para voltar ao som incluído no pacote.
+Dê dois cliques em TESTAR_SOM.bat para testar sem abrir a câmera.
+O áudio exato do vídeo enviado do YouTube não está incluído: o download
+não ficou disponível. O programa aceita seu arquivo MP3/WAV sem recompilar.
+
+GOOGLE MEET — IMAGEM
+Instale OBS Studio: https://obsproject.com/download
+Deixe o OBS fechado. Abra o PeraVanishCam antes do Meet e escolha:
+Meet → Configurações → Vídeo → Câmera → OBS Virtual Camera.
+
+GOOGLE MEET — SUA VOZ + SOM DO EFEITO
+Consulte GUIA_GOOGLE_MEET_PTBR.md, incluído neste pacote. Ele explica como
+usar Voicemeeter Banana para misturar sua voz e o som do PeraVanishCam.
+A câmera virtual transmite a imagem; o áudio precisa de configuração própria.
+
+Se a câmera não abrir, feche os outros aplicativos que a utilizam e confira
+as permissões de câmera do Windows para aplicativos da área de trabalho.
+Para outra webcam, execute no terminal: PeraVanishCam.exe --camera 1
+
+A primeira abertura pode demorar alguns segundos para extrair os arquivos.
+O vídeo é processado localmente, sem gravação nem envio para servidores.
+
+Projeto: https://github.com/perabru/PeraVanishCam
+
+APOIE ESTA VERSÃO
+Manutenção: Bruno Michel Pera. Apoio opcional, com qualquer valor.
+Pix (chave e-mail): bruno.pera@unifesp.br
+
+Origem: Nicovic17/vanish_webcam. Consulte ORIGEM.md para os créditos.

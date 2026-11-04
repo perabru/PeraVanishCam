@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="400" viewBox="0 0 1280 400" role="img" aria-labelledby="title desc">
+<title id="title">PeraVanishCam — por Bruno Michel Pera</title><desc id="desc">Efeitos de desaparecimento, gestos e áudio para sua webcam. Instalação e guia em português.</desc>
+<defs><linearGradient id="bg" x2="1" y2="1"><stop stop-color="#101126"/><stop offset="1" stop-color="#30205b"/></linearGradient><linearGradient id="accent" x2="1" y2="1"><stop stop-color="#8a73ff"/><stop offset="1" stop-color="#54edda"/></linearGradient></defs>
+<rect width="1280" height="400" rx="28" fill="url(#bg)"/>
+<circle cx="1155" cy="40" r="180" fill="#8c64fa" opacity=".10"/><circle cx="1120" cy="380" r="220" fill="#50dfcf" opacity=".06"/>
+<rect x="66" y="85" width="200" height="200" rx="48" fill="#20203e" stroke="#8a73ff" stroke-width="2"/>
+<rect x="100" y="132" width="98" height="94" rx="20" fill="none" stroke="url(#accent)" stroke-width="9"/><path d="M202 154l34-18v87l-34-18" fill="url(#accent)"/><path d="M122 158l20 40 32-44" fill="none" stroke="#f8f7ff" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="312" y="156" fill="#72e4d5" font-family="Segoe UI,Arial,sans-serif" font-size="20" letter-spacing="4">BRUNO MICHEL PERA</text>
+<text x="307" y="222" fill="#f8f6ff" font-family="Segoe UI,Arial,sans-serif" font-size="64" font-weight="700">PeraVanishCam</text>
+<text x="312" y="270" fill="#c5bedb" font-family="Segoe UI,Arial,sans-serif" font-size="25">Desapareça com um gesto. Leve o efeito para suas chamadas.</text>
+<rect x="312" y="307" width="285" height="38" rx="19" fill="#544087"/><text x="335" y="333" fill="#ffffff" font-family="Segoe UI,Arial,sans-serif" font-size="17">Windows 64 bits · Português</text>
+</svg>

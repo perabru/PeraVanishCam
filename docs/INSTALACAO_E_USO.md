@@ -75,13 +75,15 @@ Siga o [guia completo](../GUIA_GOOGLE_MEET_PTBR.md). Ele explica como instalar a
 
 A captura solicita **1280 × 720 a 30 FPS** por padrão. A resolução efetiva depende da webcam e do driver. O recorte usa bordas mais suaves, e o redimensionamento dos clones e do tronco preserva os detalhes e a transparência.
 
-Para obter uma imagem melhor, ilumine seu rosto e suas mãos pela frente, mantenha a câmera parada e capture novamente o fundo depois de mudar a luz. Para solicitar Full HD, use uma webcam compatível:
+Os clones acompanham os movimentos com estabilização temporal do contorno. A fumaça tem textura realista e duas camadas de profundidade; o tronco recebe ajuste de luminosidade e sombra de contato. Os detalhes do rosto e das roupas vêm da webcam, sem embelezamento ou reconstrução do rosto.
+
+Para obter uma imagem melhor, ilumine seu rosto e suas mãos pela frente, mantenha a câmera parada e capture novamente o fundo depois de mudar a luz. Afaste-se o suficiente para deixar espaço dos dois lados para os clones. Se sua webcam permitir, fixe foco, exposição e balanço de branco depois de ajustar a iluminação. Para solicitar Full HD, use uma webcam compatível:
 
 ```powershell
 .\PeraVanishCam.exe --width 1920 --height 1080 --fps 30
 ```
 
-Se o vídeo ficar lento, reduza a resolução:
+30 FPS é o limite solicitado, e a taxa efetiva depende do computador. A fumaça exige mais processamento durante os primeiros 1,8 segundo. Se o vídeo ficar lento, reduza a resolução:
 
 ```powershell
 .\PeraVanishCam.exe --width 960 --height 540 --fps 30

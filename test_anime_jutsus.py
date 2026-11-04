@@ -11,7 +11,7 @@ import numpy as np
 from local_app import anime_effects as effects
 from local_app import ninja_runtime as runtime
 from local_app.jutsu_gestures import classify_hand_seal, SealGate
-from local_app.naruto_effect import load_log, render_substitution, substitution_anchor
+from local_app.naruto_effect import EFFECT_SECONDS, load_log, render_substitution, substitution_anchor
 
 
 def hand(cx=300, cy=300, angle=0, gap=.12, open_palm=False):
@@ -143,7 +143,8 @@ class CameraTests(unittest.TestCase):
                                   no_mirror=True, gesture_debug=False, sound=None)
         with ExitStack() as mocks:
             mocks.enter_context(patch.object(runtime.time, 'perf_counter', side_effect=[
-                0, 0, 4.1, 4.3, 5.01, 5.2, 5.6, 6.2, 6.91, 8.5, 8.7]))
+                0, 0, 4.1, 4.3, 5.01, 5.2, 5.6, 6.2, 6.91,
+                6.91+EFFECT_SECONDS+.1, 6.91+EFFECT_SECONDS+.3]))
             for name in ('namedWindow', 'resizeWindow', 'destroyAllWindows', 'imshow'):
                 mocks.enter_context(patch.object(runtime.cv2, name))
             mocks.enter_context(patch.object(runtime.cv2, 'getWindowProperty', return_value=1))

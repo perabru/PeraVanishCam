@@ -4,9 +4,9 @@ import cv2
 import numpy as np
 
 try:
-    from .video_quality import refine_person_mask
+    from .video_quality import TemporalPersonMask, refine_person_mask
 except ImportError:
-    from video_quality import refine_person_mask
+    from video_quality import TemporalPersonMask, refine_person_mask
 
 
 class MaskQualityTests(unittest.TestCase):
@@ -78,6 +78,81 @@ class MaskQualityTests(unittest.TestCase):
             with self.subTest(frame_shape=frame.shape, mask_shape=mask.shape):
                 with self.assertRaises(ValueError):
                     refine_person_mask(frame, mask)
+
+
+class TemporalMaskTests(unittest.TestCase):
+    @staticmethod
+    def scene():
+        rng = np.random.default_rng(16)
+        frame = np.full((96, 160, 3), 20, np.uint8)
+        frame[20:88, 45:85] = rng.integers(100, 240, (68, 40, 3), dtype=np.uint8)
+        mask = np.zeros(frame.shape[:2], np.float32)
+        mask[20:88, 45:85] = 1
+        return frame, mask
+
+    def test_static_uncertain_edge_jitter_is_reduced_without_changing_camera(self):
+        frame, solid = self.scene()
+        original = frame.copy()
+        stabilizer = TemporalPersonMask()
+        noisy = solid.copy()
+        noisy[20:88, 45:48] = .4
+        first = stabilizer.update(frame, noisy, timestamp=0)
+        noisy[20:88, 45:48] = .6
+        second = stabilizer.update(frame, noisy, timestamp=1/30)
+        self.assertLess(np.abs(second[20:88, 45:48]-first[20:88, 45:48]).mean(), .15)
+        np.testing.assert_array_equal(second[20:88, 50:85], solid[20:88, 50:85])
+        np.testing.assert_array_equal(second[:10], solid[:10])
+        np.testing.assert_array_equal(frame, original)
+        self.assertTrue(np.all(noisy[20:88, 45:48] == .6))
+
+    def test_inverse_flow_moves_mask_with_person_between_inferences(self):
+        frame, mask = self.scene()
+        stabilizer = TemporalPersonMask()
+        stabilizer.update(frame, mask, timestamp=0)
+        affine = np.float32([[1, 0, 6], [0, 1, 0]])
+        moved = cv2.warpAffine(frame, affine, (160, 96), borderValue=(20, 20, 20))
+        expected = cv2.warpAffine(mask, affine, (160, 96))
+        tracked = stabilizer.update(moved, timestamp=1/30)
+        self.assertLess(np.abs(tracked-expected).mean(), np.abs(mask-expected).mean()*.45)
+        self.assertGreater(tracked[40:70, 87:90].mean(), .85)
+        self.assertLess(tracked[40:70, 45:48].mean(), .15)
+
+    def test_confident_new_segmentation_removes_old_hand_immediately(self):
+        frame, mask = self.scene()
+        stabilizer = TemporalPersonMask()
+        stabilizer.update(frame, mask, timestamp=0)
+        current = mask.copy()
+        current[20:40, 45:55] = 0
+        current[2:15, 100:103] = 1
+        result = stabilizer.update(frame, current, timestamp=1/30)
+        np.testing.assert_array_equal(result, current)
+
+    def test_cuts_gaps_and_resets_do_not_reuse_an_old_silhouette(self):
+        frame, mask = self.scene()
+        stabilizer = TemporalPersonMask()
+        stabilizer.update(frame, mask, timestamp=0)
+        cut = np.full_like(frame, 250)
+        np.testing.assert_array_equal(stabilizer.update(cut, timestamp=1/30), np.zeros_like(mask))
+        stabilizer.update(frame, mask, timestamp=2/30)
+        np.testing.assert_array_equal(stabilizer.update(frame, timestamp=1), np.zeros_like(mask))
+        stabilizer.update(frame, mask, timestamp=2)
+        stabilizer.reset()
+        np.testing.assert_array_equal(stabilizer.update(frame), np.zeros_like(mask))
+        result = stabilizer.update(np.zeros((9, 13, 3), np.uint8), np.ones((3, 5), np.float32))
+        np.testing.assert_array_equal(result, np.ones((9, 13), np.float32))
+
+    def test_nonfinite_masks_and_returned_arrays_do_not_poison_history(self):
+        frame, mask = self.scene()
+        raw = mask.copy()
+        raw[0, :3] = [np.nan, np.inf, -np.inf]
+        stabilizer = TemporalPersonMask()
+        result = stabilizer.update(frame, raw)
+        self.assertTrue(np.isfinite(result).all())
+        self.assertEqual(result.dtype, np.float32)
+        result.fill(0)
+        tracked = stabilizer.update(frame)
+        self.assertGreater(tracked[40:70, 55:75].mean(), .99)
+        self.assertTrue(np.isnan(raw[0, 0]))
 
 
 if __name__ == '__main__':

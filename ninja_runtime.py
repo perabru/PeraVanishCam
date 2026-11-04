@@ -13,11 +13,13 @@ try:
     from .naruto_effect import load_log, render_substitution, substitution_anchor
     from .jutsu_gestures import SealGate
     from .vanish_sound import VanishSound
+    from .video_quality import TemporalPersonMask
 except ImportError:
     from anime_effects import render_clones
     from naruto_effect import load_log, render_substitution, substitution_anchor
     from jutsu_gestures import SealGate
     from vanish_sound import VanishSound
+    from video_quality import TemporalPersonMask
 
 HELP_WINDOW = 'PeraVanishCam - Guia de gestos'
 
@@ -68,7 +70,9 @@ def self_test_effects() -> None:
     frame[25:150, 93:147] = (60, 110, 190)
     mask = np.zeros((160, 240), np.float32)
     mask[25:150, 93:147] = 1
-    for output in (render_clones(frame, background, mask, 2),
+    for output in (render_clones(frame, background, mask, .35),
+                   render_clones(frame, background, mask, 2),
+                   render_substitution(frame, background, mask, sprite, substitution_anchor(mask), .35),
                    render_substitution(frame, background, mask, sprite, substitution_anchor(mask), 2)):
         if output.shape != frame.shape or output.dtype != np.uint8 or np.array_equal(output, background):
             raise RuntimeError('Falha no teste dos novos efeitos ninja.')
@@ -93,6 +97,7 @@ def run_ninja_camera(args, resources: ExitStack, mode: str, api) -> int:
     if fullscreen:
         api.set_fullscreen(True)
     state, gate = NinjaState(selected=mode), SealGate()
+    temporal_mask = TemporalPersonMask()
     log_cache: dict[int, np.ndarray] = {}
     log_anchor = None
     background, mask = None, None
@@ -128,6 +133,7 @@ def run_ninja_camera(args, resources: ExitStack, mode: str, api) -> int:
                 calibration_started, last_countdown = now, None
                 samples.clear()
                 state.reset()
+                temporal_mask.reset()
                 gate.disarm(now)
             image = None
             timestamp_ms = int((now-started)*1000)
@@ -156,19 +162,23 @@ def run_ninja_camera(args, resources: ExitStack, mode: str, api) -> int:
                         last_report = now
                     if fired:
                         state.activate(fired, now)
+                        temporal_mask.reset()
                         log_anchor = None
                         last_mask = float('-inf')
                         sound.play()
                         print(f'[PeraVanishCam] Jutsu ativado: {fired}. R para voltar.')
                 if state.active:
                     age = now-state.activated_at
+                    fresh_mask = None
                     needs_mask = state.active == 'clones' or log_anchor is None or age < .13
                     if needs_mask and (mask is None or now-last_mask >= .045):
                         if image is None:
                             image = api.mp.Image(image_format=api.mp.ImageFormat.SRGB, data=cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
                         mask = api.person_mask(segmenter, image, timestamp_ms, width, height)
+                        fresh_mask = mask
                         last_mask = now
                     if state.active == 'clones':
+                        mask = temporal_mask.update(frame, fresh_mask, timestamp=now)
                         display = render_clones(frame, background, mask, age)
                     else:
                         if log_anchor is None:
@@ -190,15 +200,18 @@ def run_ninja_camera(args, resources: ExitStack, mode: str, api) -> int:
                 samples.clear()
                 calibration_started, last_countdown = now, None
                 state.reset()
+                temporal_mask.reset()
                 gate.disarm(now)
                 print('[PeraVanishCam] Saia do quadro por 4 segundos para capturar o novo fundo.')
             elif key == ord('r'):
                 state.reset()
+                temporal_mask.reset()
                 log_anchor = None
                 gate.disarm(now)
             elif key in (ord('c'), ord('t'), ord('v')) and background is not None:
                 selected = 'clones' if key == ord('c') else 'substitution' if key == ord('t') else state.selected
                 state.activate(selected, now)
+                temporal_mask.reset()
                 log_anchor = None
                 last_mask = float('-inf')
                 gate.disarm(now)

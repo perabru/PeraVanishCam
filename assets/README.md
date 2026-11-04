@@ -1,17 +1,22 @@
-# Substitution log sprite
+# Recursos visuais e sonoros
 
-`substitution_log.png` was generated with the built-in ImageGen tool. The user
-image was used as a visual reference for object shape and mood, not as an edit
-target. The sprite is an original transparent-background illustration.
+`substitution_log.png`: tronco fotorealista com transparência, criado com
+ImageGen para esta versão. A casca, os anéis e a iluminação pertencem à imagem;
+a queda, o ajuste de exposição e a sombra são calculados pelo programa.
 
-Final prompt:
+Prompt da edição final: preservar a orientação diagonal, casca, anéis e cores
+da madeira; remover todo o fundo, névoa, brilho e sombra externa; manter o
+objeto completo como recorte com transparência real, sem textos ou logotipos.
 
-> Create a single ORIGINAL 2D hand-painted anime-style game sprite for live video compositing, using the user's attached image ONLY as a visual reference for the object and mood. Subject: one short thick wooden substitution log floating diagonally (bottom-left to top-right), soft desaturated pale sage-green bark with visible wood grain, dark ink cracks and small dark notches, round cut end with concentric wood rings visible at lower-left. Dramatic clean silhouette, strong cel shading and highlights, polished Japanese animation look. Center the entire log, leave a modest transparent margin around all edges. NO smoke, NO particles, NO background, NO scenery, NO shadow outside the object, NO people, NO text, NO symbols or logos. True transparent alpha background; isolated cutout. Asset should be immediately usable as a sprite over live webcam video.
+`smoke_cloud.png`: nuvem de fumaça realista com transparência criada com
+ImageGen para este projeto. `realistic_smoke.py` transforma a textura em
+camadas animadas com expansão, fluxo turbulento e dissipação. Não é uma
+simulação física 3D. As cores são pré-multiplicadas pelo alfa antes de qualquer
+redimensionamento para evitar bordas escuras.
 
-For smoke, the app uses its own procedurally animated, layered particles in
-`naruto_effect.py`. A [CC0 smoke sprite sheet](https://opengameart.org/content/smoke-sprite-sheet)
-was reviewed but is not included because the procedural smoke scales and follows
-the detected person dynamically.
+`gestos-ninja.svg`: guia vetorial das poses de mãos adaptadas ao reconhecimento
+pela webcam.
 
-
-`gestos-ninja.svg` é um guia vetorial criado para demonstrar as poses de mãos adaptadas ao reconhecimento pela webcam.
+Os arquivos de identidade visual foram criados para PeraVanishCam.
+`vanish.MP3` e os recursos herdados mantêm os créditos da base; veja
+[ORIGEM.md](../ORIGEM.md).

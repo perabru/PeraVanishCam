@@ -21,8 +21,11 @@ Os selos são adaptações inspiradas no anime para reconhecimento pela webcam.
 
 QUALIDADE DA IMAGEM
 A captura solicita 1280x720 a 30 FPS, conforme o suporte da webcam.
-O recorte tem bordas mais suaves e os efeitos preservam melhor os detalhes.
+Fumaça realista com turbulência e camadas de profundidade; tronco fotorealista
+com ajuste de luz, sombra e queda. A dissipação dura 1,8 segundo.
+Os clones têm contorno estabilizado pelo movimento, preservando rosto e roupa.
 Ilumine rosto e mãos pela frente e mantenha a câmera parada.
+Deixe espaço dos dois lados para os clones. A fluidez depende do computador.
 Para solicitar Full HD: PeraVanishCam.exe --width 1920 --height 1080
 Para melhorar o desempenho: PeraVanishCam.exe --width 960 --height 540
 

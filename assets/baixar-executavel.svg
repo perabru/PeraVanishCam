@@ -1,9 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="720" height="112" viewBox="0 0 720 112" role="img" aria-labelledby="title desc">
-<title id="title">Baixar executável para Windows (.EXE)</title><desc id="desc">Download direto do PeraVanishCam para Windows 64 bits, sem instalar Python.</desc>
-<defs><linearGradient id="bg" x2="1"><stop stop-color="#6846df"/><stop offset="1" stop-color="#3736a6"/></linearGradient></defs>
-<rect x="1" y="1" width="718" height="110" rx="22" fill="url(#bg)" stroke="#a894ff" stroke-width="2"/>
-<circle cx="61" cy="56" r="30" fill="#fff" fill-opacity=".14"/><path d="M61 34v31m-12-12 12 12 12-12m-28 23h32" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
-<text x="111" y="52" fill="#fff" font-family="Segoe UI,Arial,sans-serif" font-size="27" font-weight="700">BAIXAR EXECUTÁVEL (.EXE)</text>
-<text x="113" y="80" fill="#eee9ff" font-family="Segoe UI,Arial,sans-serif" font-size="19">PeraVanishCam · Windows 64 bits</text>
-<path d="m655 41 15 15-15 15" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
-</svg>

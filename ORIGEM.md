@@ -12,8 +12,6 @@ Esta edição adiciona identidade própria, instruções de instalação e uso e
 
 A imagem do tronco e a fumaça mantêm a descrição de origem em [assets/README.md](assets/README.md).
 
-Os clones ao vivo, os novos selos, a fumaça animada e as melhorias de recorte e composição foram adicionados nesta edição.
-
 O banner vetorial `assets/peravanishcam-banner.svg` foi criado para esta edição.
 
 Os links de apoio do autor original são preservados: [PayPal](https://paypal.me/nicovic17) e [Revolut](https://revolut.me/nicoauriemma).

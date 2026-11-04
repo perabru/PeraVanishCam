@@ -9,16 +9,8 @@ import cv2
 import numpy as np
 
 
-try:
-    from .realistic_smoke import render_smoke_layer
-except ImportError:
-    from realistic_smoke import render_smoke_layer
-
-
-EFFECT_SECONDS = 1.80
+EFFECT_SECONDS = 1.45
 LOG_PATH = Path(__file__).resolve().parent / "assets" / "substitution_log.png"
-LOG_CACHE_MAX_BYTES = 32 * 1024 * 1024
-LOG_CACHE_MAX_ENTRIES = 8
 
 
 def joined_hands_from_landmarks(hands, width: int, height: int) -> bool:
@@ -65,16 +57,6 @@ def load_log() -> np.ndarray:
     sprite = cv2.imread(str(LOG_PATH), cv2.IMREAD_UNCHANGED)
     if sprite is None or sprite.ndim != 3 or sprite.shape[2] != 4:
         raise RuntimeError(f"Imagem do tronco indisponivel: {LOG_PATH}")
-    # Some PNG encoders produce 253/254 instead of full coverage. Normalize
-    # opacity without changing the photographed bark or its actual silhouette.
-    alpha = sprite[:, :, 3]
-    # Ignore near-zero encoder noise outside the wood, keeping the finely
-    # antialiased outline without a faint rectangular/background haze.
-    alpha[alpha <= 2] = 0
-    peak = int(alpha.max())
-    if peak == 0:
-        raise RuntimeError('A imagem do tronco esta vazia.')
-    sprite[:, :, 3] = np.rint(alpha.astype(np.float32)*(255.0/peak)).astype(np.uint8)
     return sprite
 
 
@@ -84,26 +66,22 @@ def overlay_log(frame: np.ndarray, sprite: np.ndarray, anchor: tuple[int, int, i
     if opacity <= 0:
         return
     cx, cy, target_height = anchor
-    # Resize premultiplied colors so transparent border RGB cannot leak into
-    # the log's outline. Cubic interpolation preserves detail when enlarging.
     height = max(1, int(target_height * scale))
     width = max(1, int(height * sprite.shape[1] / sprite.shape[0]))
     sized = cache.get(height) if cache is not None else None
     if sized is None:
-        premultiplied = sprite.astype(np.float32) / 255.0
-        premultiplied[:, :, :3] *= premultiplied[:, :, 3:4]
-        interpolation = cv2.INTER_AREA if height < sprite.shape[0] else cv2.INTER_CUBIC
-        sized = np.clip(cv2.resize(premultiplied, (width, height), interpolation=interpolation), 0, 1)
-        # Cubic ringing must never create a color brighter than its coverage.
-        sized[:, :, :3] = np.minimum(sized[:, :, :3], sized[:, :, 3:4])
-        if cache is not None and sized.nbytes <= LOG_CACHE_MAX_BYTES:
-            # Native-resolution float RGBA sprites can each occupy several
-            # MiB. Bound bytes as well as entries when the person changes size.
-            cached_bytes = sum(image.nbytes for image in cache.values())
-            while cache and (len(cache) >= LOG_CACHE_MAX_ENTRIES or
-                             cached_bytes + sized.nbytes > LOG_CACHE_MAX_BYTES):
-                oldest = cache.pop(next(iter(cache)))
-                cached_bytes -= oldest.nbytes
+        # Resize in premultiplied alpha so the clean illustrated contour does
+        # not acquire dark/colored fringes from invisible background pixels.
+        rgba = sprite.astype(np.float32) / 255.0
+        rgba[:, :, :3] *= rgba[:, :, 3:4]
+        interpolation = cv2.INTER_AREA if height <= sprite.shape[0] else cv2.INTER_CUBIC
+        rgba = np.clip(cv2.resize(rgba, (width, height), interpolation=interpolation), 0.0, 1.0)
+        alpha = rgba[:, :, 3:4]
+        rgb = np.divide(rgba[:, :, :3], alpha, out=np.zeros_like(rgba[:, :, :3]), where=alpha > 1e-6)
+        sized = np.clip(np.concatenate((rgb, alpha), axis=2) * 255.0, 0, 255).astype(np.uint8)
+        if cache is not None:
+            if len(cache) >= 16:
+                cache.pop(next(iter(cache)))
             cache[height] = sized
     x1, y1 = cx - width // 2, cy - height // 2
     x2, y2 = x1 + width, y1 + height
@@ -111,30 +89,11 @@ def overlay_log(frame: np.ndarray, sprite: np.ndarray, anchor: tuple[int, int, i
     right, bottom = min(frame.shape[1], x2), min(frame.shape[0], y2)
     if left >= right or top >= bottom:
         return
-    # A soft contact shadow tightens as the wood reaches the lower frame edge.
-    # It is evaluated in a small ROI, so HD output does not need a shadow buffer.
-    distance = max(0, frame.shape[0] - (cy + height - height // 2))
-    contact = math.exp(-distance/max(1, height*.45))
-    shadow_rx = max(2, width*(.35 + .18*(1-contact)))
-    shadow_ry = max(1.5, height*(.022 + .024*(1-contact)))
-    sy = frame.shape[0]-max(2, height*.018)
-    sx0, sx1 = max(0, int(cx-shadow_rx*2.5)), min(frame.shape[1], int(cx+shadow_rx*2.5)+1)
-    sy0, sy1 = max(0, int(sy-shadow_ry*3)), frame.shape[0]
-    if sx0 < sx1 and sy0 < sy1:
-        yy, xx = np.mgrid[sy0:sy1, sx0:sx1]
-        shadow = np.exp(-.5*(((xx-cx)/shadow_rx)**2 + ((yy-sy)/shadow_ry)**2))
-        shadow *= .30*contact*float(np.clip(opacity, 0, 1))
-        destination = frame[sy0:sy1, sx0:sx1]
-        destination[:] = np.rint(destination*(1-shadow[:, :, None])).astype(np.uint8)
     part = sized[top - y1:bottom - y1, left - x1:right - x1]
-    opacity = float(np.clip(opacity, 0, 1))
-    alpha = part[:, :, 3:4] * opacity
-    # Match ambient exposure with a bounded gain; never recolor the live person.
-    sample = frame[::max(1, frame.shape[0]//24), ::max(1, frame.shape[1]//32)]
-    exposure = float(np.clip(.62 + np.mean(sample)/510., .62, 1.08))
+    alpha = (part[:, :, 3:4].astype(np.float32) / 255.0) * opacity
     destination = frame[top:bottom, left:right]
     destination[:] = np.clip(
-        part[:, :, :3] * (255.0 * opacity * exposure)
+        part[:, :, :3].astype(np.float32) * alpha
         + destination.astype(np.float32) * (1.0 - alpha),
         0, 255,
     ).astype(np.uint8)
@@ -142,10 +101,7 @@ def overlay_log(frame: np.ndarray, sprite: np.ndarray, anchor: tuple[int, int, i
 
 def landed_log_anchor(anchor: tuple[int, int, int], frame_height: int) -> tuple[int, int, int]:
     cx, cy, size = anchor
-    # Align the full sprite box with the floor. The former 0.48 factor hid
-    # the last 2% of a tightly framed upright log below the camera image.
-    bottom_half = size - size // 2
-    return cx, max(cy, frame_height - bottom_half), size
+    return cx, max(cy, frame_height - round(size * 0.48)), size
 
 
 def falling_log_anchor(anchor: tuple[int, int, int], frame_height: int,
@@ -169,8 +125,53 @@ def falling_log_anchor(anchor: tuple[int, int, int], frame_height: int,
 
 def _smoke_layer(frame: np.ndarray, anchor: tuple[int, int, int],
                  age: float, foreground: bool) -> None:
-    render_smoke_layer(frame, anchor, age, foreground, EFFECT_SECONDS)
-
+    if age >= EFFECT_SECONDS:
+        return
+    cx, cy, size = anchor
+    rng = np.random.default_rng(9127 if foreground else 1934)
+    reveal = min(1.0, age / 0.16)
+    fade = max(0.0, 1.0 - max(0.0, age - 0.33) / 1.12)
+    if fade <= 0:
+        return
+    # Smoke only occupies the area around the log; avoid allocating and
+    # blending a full-size RGBA video frame twice per animation frame.
+    margin = int(size * 1.35)
+    left, top = max(0, cx - margin), max(0, cy - margin)
+    right = min(frame.shape[1], cx + margin + 1)
+    bottom = min(frame.shape[0], cy + margin + 1)
+    if left >= right or top >= bottom:
+        return
+    layer = np.zeros((bottom - top, right - left, 4), dtype=np.uint8)
+    radius = size * (0.27 + 0.54 * min(age, 1.0))
+    for _ in range(22 if foreground else 18):
+        angle = rng.uniform(0, 2 * math.pi)
+        distance = radius * rng.uniform(0.25, 1.0)
+        x = int(cx + math.cos(angle) * distance) - left
+        y = int(cy + math.sin(angle) * distance * 0.63 - age * size * 0.13) - top
+        puff = max(2, int(size * rng.uniform(0.09, 0.20) * (0.7 + age * 0.7)))
+        color = (229, 235, 235, 190) if foreground else (152, 162, 166, 125)
+        cv2.ellipse(layer, (x, y), (puff, int(puff * 0.68)),
+                    rng.uniform(-25, 25), 0, 360, color, -1, cv2.LINE_AA)
+    # Long white winding smoke ribbons echo the supplied anime reference.
+    for direction in (-1, 1):
+        center = (int(cx + direction * size * 0.13) - left,
+                  int(cy - size * 0.13 - age * size * 0.09) - top)
+        axes = (max(2, int(size * (0.30 + age * 0.27))),
+                max(2, int(size * (0.09 + age * 0.12))))
+        cv2.ellipse(layer, center, axes, direction * 15, 20, 230,
+                    (244, 247, 245, 220), max(2, int(size * 0.025)), cv2.LINE_AA)
+    occupied = cv2.findNonZero(layer[:, :, 3])
+    if occupied is None:
+        return
+    x, y, width, height = cv2.boundingRect(occupied)
+    destination = frame[top + y:top + y + height, left + x:left + x + width]
+    layer = layer[y:y + height, x:x + width]
+    alpha = (layer[:, :, 3:4].astype(np.float32) / 255.0) * reveal * fade
+    destination[:] = np.clip(
+        layer[:, :, :3].astype(np.float32) * alpha
+        + destination.astype(np.float32) * (1.0 - alpha),
+        0, 255,
+    ).astype(np.uint8)
 
 
 def render_substitution(frame: np.ndarray, background: np.ndarray, mask: np.ndarray,

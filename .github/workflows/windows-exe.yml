@@ -60,7 +60,7 @@ jobs:
           Copy-Item GUIA_GOOGLE_MEET_PTBR.md,TESTAR_SOM.bat,ORIGEM.md dist\
           Copy-Item docs dist\docs -Recurse
           New-Item -ItemType Directory -Force dist\assets | Out-Null
-          Copy-Item assets\README.md,assets\gestos-ninja.svg dist\assets\
+          Copy-Item assets\README.md dist\assets\README.md
           Compress-Archive -Path dist\PeraVanishCam.exe,dist\LEIA-ME.txt,dist\GUIA_GOOGLE_MEET_PTBR.md,dist\TESTAR_SOM.bat,dist\ORIGEM.md,dist\docs,dist\assets -DestinationPath dist\PeraVanishCam-Windows-x64.zip
           Get-FileHash dist\PeraVanishCam.exe,dist\PeraVanishCam-Windows-x64.zip -Algorithm SHA256 | ForEach-Object { "$($_.Hash.ToLower())  $(Split-Path $_.Path -Leaf)" } | Set-Content dist\SHA256SUMS.txt
           python -m pip freeze | Set-Content dist\dependencies.txt

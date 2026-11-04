@@ -1,42 +1,18 @@
-PeraVanishCam — Windows 64 bits
+PeraVanishCam — Versão clássica — Windows 64 bits
 
-CORRECOES DESTA REVISAO
-Novo tronco inspirado no Naruto: quase vertical, com dois galhos quebrados,
-casca realista, aneis da madeira e base inteira ao pousar.
-Fechar a janela pelo X encerra a captura e libera a webcam.
-Se a webcam mudar a resolucao, o programa captura o fundo novamente;
-saia do enquadramento pelos 4 segundos indicados no terminal.
-O efeito do tronco usa menos memoria ao ser repetido em Full HD.
-Os scripts do codigo-fonte selecionam Python 3.11 de 64 bits.
+Retorno à primeira versão (1.0.1): menu e efeito original de fumaça e tronco.
+Clones e transformação removidos. Ilustração do tronco restaurada com contornos
+mais limpos e transparência melhorada, mantendo o visual anime original.
+Mantidas as correções para fechar a webcam e recalibrar ao mudar a resolução.
 
 1. Extraia o ZIP e abra PeraVanishCam.exe. Não é preciso instalar Python.
-2. Escolha 1 (Normal), 2 (Naruto) ou 3 (Clones das Sombras).
+2. Escolha 1 (Normal) ou 2 (Naruto).
 3. Saia do enquadramento por 4 segundos para capturar o fundo.
-4. Volte e faça o gesto do modo escolhido. O guia dos novos selos está
-em docs/GESTOS_NINJA.md e na tecla H do modo 3.
+4. Volte e faça o gesto: V com os dedos no Normal; palmas juntas no Naruto.
 
-TECLAS: V ativar/repetir o efeito; R reaparecer; Espaço novo fundo; F tela cheia;
+TECLAS: V desaparecer; R reaparecer; Espaço novo fundo; F tela cheia;
 Q ou Esc fechar. Clique na janela da câmera antes de utilizar o teclado.
-Nos efeitos de tronco e clones, o som toca ao ativar o efeito.
-
-SELOS NINJA — MODO 3
-Clones: estique indicador e médio nas duas mãos e forme uma cruz (+).
-Tronco (selo do Tigre): estique indicador e médio juntos, nas duas mãos lado a lado,
-apontando para cima. Segure o selo por 0,65 segundo e depois abaixe as mãos.
-C cria clones; T ativa o tronco; R volta ao normal; H mostra o guia visual.
-A fumaça envolve a entrada dos efeitos e depois se dissipa. Os clones
-continuam ao vivo; o tronco cai e permanece até você pressionar R.
-Os selos são adaptações inspiradas no anime para reconhecimento pela webcam.
-
-QUALIDADE DA IMAGEM
-A captura solicita 1280x720 a 30 FPS, conforme o suporte da webcam.
-Fumaça realista com turbulência e camadas de profundidade; tronco fotorealista
-com ajuste de luz, sombra e queda. A dissipação dura 1,8 segundo.
-Os clones têm contorno estabilizado pelo movimento, preservando rosto e roupa.
-Ilumine rosto e mãos pela frente e mantenha a câmera parada.
-Deixe espaço dos dois lados para os clones. A fluidez depende do computador.
-Para solicitar Full HD: PeraVanishCam.exe --width 1920 --height 1080
-Para melhorar o desempenho: PeraVanishCam.exe --width 960 --height 540
+O som toca ao desaparecer no modo Naruto, inclusive ao pressionar V.
 
 SOM PERSONALIZADO
 Coloque som.mp3 ou som.wav na mesma pasta de PeraVanishCam.exe e reabra o

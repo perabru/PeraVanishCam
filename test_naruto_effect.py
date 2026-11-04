@@ -1,4 +1,5 @@
 import unittest
+import io
 from contextlib import ExitStack
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
@@ -7,10 +8,8 @@ import numpy as np
 
 from local_app import vanish_cam as app
 from local_app.naruto_effect import (
-    EFFECT_SECONDS, LOG_CACHE_MAX_BYTES, LOG_CACHE_MAX_ENTRIES,
-    falling_log_anchor, joined_hands_from_landmarks,
+    EFFECT_SECONDS, falling_log_anchor, joined_hands_from_landmarks,
     landed_log_anchor, load_log, overlay_log, render_substitution, substitution_anchor,
-    _smoke_layer,
 )
 from local_app.test_video_output import arguments
 
@@ -81,6 +80,29 @@ class EffectTests(unittest.TestCase):
         self.assertEqual(int(sprite[:, :, 3].min()), 0)
         self.assertEqual(int(sprite[:, :, 3].max()), 255)
 
+    def test_transparent_pixels_do_not_tint_resized_log_edges(self):
+        sprite = np.zeros((20, 20, 4), np.uint8)
+        sprite[:, :, :3] = (0, 255, 0)  # Invisible green must never bleed.
+        sprite[4:16, 4:16] = (0, 0, 255, 255)
+        for size in (7, 41):
+            with self.subTest(size=size):
+                frame = np.zeros((60, 60, 3), np.uint8)
+                overlay_log(frame, sprite, (30, 30, size))
+                self.assertGreater(frame[:, :, 2].max(), 200)
+                self.assertEqual(int(frame[:, :, 1].max()), 0)
+
+    def test_repeated_sizes_do_not_grow_cache_without_bound(self):
+        cache = {}
+        sprite = np.full((8, 8, 4), 255, np.uint8)
+        frame = np.zeros((60, 60, 3), np.uint8)
+        for size in range(5, 100):
+            overlay_log(frame, sprite, (30, 30, size), cache=cache)
+        self.assertLessEqual(len(cache), 16)
+        expected, cached = np.zeros_like(frame), np.zeros_like(frame)
+        overlay_log(expected, sprite, (30, 30, 99))
+        overlay_log(cached, sprite, (30, 30, 99), cache=cache)
+        np.testing.assert_array_equal(cached, expected)
+
     def test_smoke_animation_leaves_log_behind(self):
         frame = np.full((160, 240, 3), 130, np.uint8)
         background = np.full_like(frame, 35)
@@ -119,108 +141,24 @@ class EffectTests(unittest.TestCase):
         overlay_log(expected, load_log(), floor)
         np.testing.assert_array_equal(output, expected)
 
-    def test_upright_log_lands_without_cropping_the_cut_base(self):
-        for height in (99, 100):
-            with self.subTest(height=height):
-                # A distinct end-grain band catches the old 2% base clipping.
-                sprite = np.full((height, 38, 4), (100, 100, 100, 255), np.uint8)
-                sprite[-6:, :, :3] = (20, 20, 220)
-                frame = np.full((240, 240, 3), 35, np.uint8)
-                floor = landed_log_anchor((120, 80, height), frame.shape[0])
-                overlay_log(frame, sprite, floor)
-                base = frame[:, 120]
-                red_rows = base[:, 2].astype(int) > 2 * base[:, 0].astype(int)
-                self.assertEqual(int(red_rows.sum()), 6)
-                self.assertTrue(red_rows[-1])
-
-
-class SmokeQualityTests(unittest.TestCase):
-    @staticmethod
-    def smoke(age, anchor=(200, 160, 90), shape=(360, 420, 3)):
-        output = np.full(shape, 28, np.uint8)
-        _smoke_layer(output, anchor, age, False)
-        _smoke_layer(output, anchor, age, True)
-        return output
-
-    def test_dense_soft_smoke_animates_and_fades_completely(self):
-        peak = self.smoke(.30)
-        later = self.smoke(.75)
-        faded = self.smoke(EFFECT_SECONDS-.03)
-        self.assertGreater(np.count_nonzero(peak[:, :, 0] > 70), 3000)
-        self.assertGreater(np.unique(peak[:, :, 0]).size, 80)
-        self.assertFalse(np.array_equal(peak, later))
-        self.assertLess(np.abs(faded.astype(float)-28).sum(),
-                        np.abs(peak.astype(float)-28).sum()*.05)
-        for age in (-1, 0, EFFECT_SECONDS, EFFECT_SECONDS+1, float('nan')):
-            np.testing.assert_array_equal(self.smoke(age), np.full_like(peak, 28))
-        np.testing.assert_array_equal(peak, self.smoke(.30))
-
-    def test_smoke_clips_safely_at_every_frame_edge_and_large_sizes(self):
-        for anchor in ((-20, 20, 90), (410, 350, 90), (210, -30, 90),
-                       (600, 600, 20), (200, 160, 3000), (200, 160, 0)):
-            image = self.smoke(.4, anchor)
-            self.assertEqual(image.shape, (360, 420, 3))
-            self.assertEqual(image.dtype, np.uint8)
-        image = self.smoke(.4, (70, 100, 35))
-        np.testing.assert_array_equal(image[300:, 300:], np.full((60, 120, 3), 28, np.uint8))
-
-    def test_hd_smoke_preserves_resolution_and_produces_smooth_boundaries(self):
-        image = self.smoke(.4, (640, 330, 340), (720, 1280, 3))
-        self.assertEqual(image.shape, (720, 1280, 3))
-        values = image[:, :, 0]
-        self.assertGreater(np.count_nonzero(values > 100), 60000)
-        self.assertGreater(np.unique(values).size, 100)
-        np.testing.assert_array_equal(image[0, 0], [28, 28, 28])
-
-    def test_log_resize_does_not_leak_invisible_border_colors(self):
-        sprite = np.full((8, 8, 4), (0, 255, 0, 0), np.uint8)
-        sprite[2:6, 2:6] = (220, 220, 220, 255)
-        for height in (5, 31):
-            image = np.full((60, 60, 3), 35, np.uint8)
-            overlay_log(image, sprite, (30, 30, height))
-            np.testing.assert_array_equal(image[:, :, 0], image[:, :, 1])
-            np.testing.assert_array_equal(image[:, :, 1], image[:, :, 2])
-            self.assertGreater(int(image.max()), 100)
-
-    def test_log_size_cache_is_bounded_and_cached_pixels_match(self):
-        sprite = load_log()
-        cache = {}
-        for height in range(10, 50):
-            output = np.zeros((80, 80, 3), np.uint8)
-            overlay_log(output, sprite, (40, 40, height), cache=cache)
-            self.assertLessEqual(len(cache), LOG_CACHE_MAX_ENTRIES)
-            self.assertLessEqual(sum(image.nbytes for image in cache.values()),
-                                 LOG_CACHE_MAX_BYTES)
-        uncached = np.zeros((80, 80, 3), np.uint8)
-        overlay_log(uncached, sprite, (40, 40, 49))
-        np.testing.assert_array_equal(output, uncached)
-
-    def test_log_cache_obeys_byte_budget_and_skips_oversized_sprites(self):
-        # A smaller budget exercises native-resolution memory accounting
-        # without allocating hundreds of MiB for a Full HD regression.
-        sprite = np.full((8, 12, 4), 255, np.uint8)
-        cache = {}
-        budget = 12 * 1024
-        with patch('local_app.naruto_effect.LOG_CACHE_MAX_BYTES', budget):
-            for height in range(10, 50):
-                output = np.zeros((80, 80, 3), np.uint8)
-                overlay_log(output, sprite, (40, 40, height), cache=cache)
-                self.assertLessEqual(len(cache), LOG_CACHE_MAX_ENTRIES)
-                self.assertLessEqual(sum(image.nbytes for image in cache.values()), budget)
-        self.assertNotIn(49, cache)
-        uncached = np.zeros((80, 80, 3), np.uint8)
-        overlay_log(uncached, sprite, (40, 40, 49))
-        np.testing.assert_array_equal(output, uncached)
-
 
 class MenuTests(unittest.TestCase):
+    def test_removed_effects_cannot_be_selected_from_command_line(self):
+        for mode in ("clones", "transformation"):
+            with self.subTest(mode=mode), patch("sys.argv", ["PeraVanishCam", "--mode", mode]), patch("sys.stderr", new_callable=io.StringIO):
+                with self.assertRaises(SystemExit) as error:
+                    app.parse_args()
+                self.assertEqual(error.exception.code, 2)
+        with patch("sys.argv", ["PeraVanishCam", "--mode", "naruto"]):
+            self.assertEqual(app.parse_args().mode, "naruto")
+
     def test_keyboard_selection(self):
         with ExitStack() as mocks:
+            mocks.enter_context(patch.object(app.cv2, "getWindowProperty", return_value=1))
             mocks.enter_context(patch.object(app.cv2, "namedWindow"))
             mocks.enter_context(patch.object(app.cv2, "setMouseCallback"))
             mocks.enter_context(patch.object(app.cv2, "imshow"))
             mocks.enter_context(patch.object(app.cv2, "destroyWindow"))
-            mocks.enter_context(patch.object(app.cv2, "getWindowProperty", return_value=1))
             key = mocks.enter_context(patch.object(app.cv2, "waitKey", return_value=ord("2")))
             self.assertEqual(app.choose_mode(), "naruto")
             key.return_value = ord("1")
@@ -248,12 +186,12 @@ class NarutoVideoLoopTests(unittest.TestCase):
             mocks.enter_context(patch.object(app.time, "perf_counter", side_effect=(
                 0, 0, 0.1, 4.1, 4.3, 4.35, 4.40, 4.42, 5.05, 5.1, 5.9,
             )))
+            mocks.enter_context(patch.object(app.cv2, "getWindowProperty", return_value=1))
             mocks.enter_context(patch.object(app.cv2, "namedWindow"))
             mocks.enter_context(patch.object(app.cv2, "resizeWindow"))
             mocks.enter_context(patch.object(app.cv2, "destroyAllWindows"))
             mocks.enter_context(patch.object(app.cv2, "imshow", side_effect=lambda name, frame: preview.append(frame.copy())))
             mocks.enter_context(patch.object(app.cv2, "waitKey", side_effect=(0, 0, 0, 0, ord("q"))))
-            mocks.enter_context(patch.object(app.cv2, "getWindowProperty", return_value=1))
             mocks.enter_context(patch.object(app.cv2, "putText", side_effect=AssertionError("Overlay vietato")))
             mocks.enter_context(patch("builtins.print"))
             self.assertEqual(app.run(), 0)

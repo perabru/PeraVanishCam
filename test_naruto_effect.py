@@ -119,6 +119,20 @@ class EffectTests(unittest.TestCase):
         overlay_log(expected, load_log(), floor)
         np.testing.assert_array_equal(output, expected)
 
+    def test_upright_log_lands_without_cropping_the_cut_base(self):
+        for height in (99, 100):
+            with self.subTest(height=height):
+                # A distinct end-grain band catches the old 2% base clipping.
+                sprite = np.full((height, 38, 4), (100, 100, 100, 255), np.uint8)
+                sprite[-6:, :, :3] = (20, 20, 220)
+                frame = np.full((240, 240, 3), 35, np.uint8)
+                floor = landed_log_anchor((120, 80, height), frame.shape[0])
+                overlay_log(frame, sprite, floor)
+                base = frame[:, 120]
+                red_rows = base[:, 2].astype(int) > 2 * base[:, 0].astype(int)
+                self.assertEqual(int(red_rows.sum()), 6)
+                self.assertTrue(red_rows[-1])
+
 
 class SmokeQualityTests(unittest.TestCase):
     @staticmethod

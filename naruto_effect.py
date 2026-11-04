@@ -68,6 +68,9 @@ def load_log() -> np.ndarray:
     # Some PNG encoders produce 253/254 instead of full coverage. Normalize
     # opacity without changing the photographed bark or its actual silhouette.
     alpha = sprite[:, :, 3]
+    # Ignore near-zero encoder noise outside the wood, keeping the finely
+    # antialiased outline without a faint rectangular/background haze.
+    alpha[alpha <= 2] = 0
     peak = int(alpha.max())
     if peak == 0:
         raise RuntimeError('A imagem do tronco esta vazia.')
@@ -110,7 +113,7 @@ def overlay_log(frame: np.ndarray, sprite: np.ndarray, anchor: tuple[int, int, i
         return
     # A soft contact shadow tightens as the wood reaches the lower frame edge.
     # It is evaluated in a small ROI, so HD output does not need a shadow buffer.
-    distance = max(0, frame.shape[0] - (cy + height*.48))
+    distance = max(0, frame.shape[0] - (cy + height - height // 2))
     contact = math.exp(-distance/max(1, height*.45))
     shadow_rx = max(2, width*(.35 + .18*(1-contact)))
     shadow_ry = max(1.5, height*(.022 + .024*(1-contact)))
@@ -139,7 +142,10 @@ def overlay_log(frame: np.ndarray, sprite: np.ndarray, anchor: tuple[int, int, i
 
 def landed_log_anchor(anchor: tuple[int, int, int], frame_height: int) -> tuple[int, int, int]:
     cx, cy, size = anchor
-    return cx, max(cy, frame_height - round(size * 0.48)), size
+    # Align the full sprite box with the floor. The former 0.48 factor hid
+    # the last 2% of a tightly framed upright log below the camera image.
+    bottom_half = size - size // 2
+    return cx, max(cy, frame_height - bottom_half), size
 
 
 def falling_log_anchor(anchor: tuple[int, int, int], frame_height: int,

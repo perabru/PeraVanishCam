@@ -45,7 +45,11 @@ class RealisticSmokeTests(unittest.TestCase):
         self.assertLess(float(dark[180:205, 180:220].mean()),
                         float(bright[180:205, 180:220].mean()))
         np.testing.assert_array_equal(dark[:30], np.full_like(dark[:30], 25))
-        self.assertLess(int(dark[236, 200, 0]), 25)
+        # Check the contact shadow outside the sprite box so this assertion
+        # remains independent of the log's silhouette and wood color.
+        log_width = max(1, int(110 * sprite.shape[1] / sprite.shape[0]))
+        right = 200 + log_width - log_width // 2
+        self.assertLess(int(dark[236:, right+1:right+10].min()), 25)
 
 
 if __name__ == '__main__':

@@ -1,6 +1,8 @@
 PeraVanishCam — Windows 64 bits
 
 CORRECOES DESTA REVISAO
+Novo tronco inspirado no Naruto: quase vertical, com dois galhos quebrados,
+casca realista, aneis da madeira e base inteira ao pousar.
 Fechar a janela pelo X encerra a captura e libera a webcam.
 Se a webcam mudar a resolucao, o programa captura o fundo novamente;
 saia do enquadramento pelos 4 segundos indicados no terminal.

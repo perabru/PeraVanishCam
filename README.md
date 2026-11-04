@@ -38,7 +38,7 @@ A fumaça envolve a entrada dos efeitos e se dissipa. O tronco cai e permanece n
 ## Efeitos realistas
 
 - **Fumaça com textura realista:** expansão, turbulência interna, transparência e dissipação em 1,8 segundo. Camadas passam atrás e à frente dos clones e do tronco.
-- **Tronco fotorealista:** casca e anéis da madeira visíveis, queda com pequeno rebote, ajuste de luminosidade ao ambiente e sombra ao tocar a base do quadro.
+- **Tronco inspirado no Naruto:** silhueta quase vertical com dois galhos quebrados, casca e anéis da madeira fotorealistas, queda com pequeno rebote, ajuste de luminosidade ao ambiente e sombra ao tocar a base do quadro.
 - **Clones com contorno estável:** o fluxo óptico acompanha o movimento entre as leituras da segmentação e reduz a tremulação das bordas. Rosto e roupa continuam vindo do quadro atual da webcam.
 
 O processamento usa **MediaPipe, OpenCV e NumPy**, sem serviço de IA na nuvem. As camadas de fumaça são reutilizadas entre os clones para reduzir o custo de processamento. A fluidez depende do computador; 720p é o ponto de partida recomendado.

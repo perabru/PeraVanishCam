@@ -1,0 +1,94 @@
+<p align="center"><img src="assets/peravanishcam-banner.svg" alt="PeraVanishCam — por Bruno Michel Pera" width="100%"></p>
+
+# PeraVanishCam
+
+**Versão mantida e personalizada por Bruno Michel Pera.** Efeitos de desaparecimento para webcam, reconhecimento por gestos e som personalizado, com instruções em português.
+
+[Baixar para Windows](https://github.com/perabru/PeraVanishCam/releases/latest) · [Instalar e começar](docs/INSTALACAO_E_USO.md) · [Usar no Google Meet](GUIA_GOOGLE_MEET_PTBR.md) · [Apoiar com Pix](#apoie-com-pix)
+
+## Começar em cinco passos
+
+1. Em **[Releases](https://github.com/perabru/PeraVanishCam/releases/latest)**, baixe **PeraVanishCam-Windows-x64.zip**.
+2. Extraia todos os arquivos e abra **PeraVanishCam.exe**. A versão pronta não precisa de Python.
+3. Escolha **1 — Normal** ou **2 — Naruto**.
+4. Saia do enquadramento por **4 segundos** para capturar o fundo. Depois volte.
+5. Faça o gesto do modo escolhido ou pressione **V** na janela da câmera.
+
+| Modo | Como ativar | Efeito |
+| --- | --- | --- |
+| Normal | Indicador e médio formando V | Desaparecimento gradual |
+| Naruto | Palmas juntas, dedos lado a lado, duas mãos visíveis | Fumaça, tronco e som ao desaparecer |
+
+O vídeo é processado no seu computador. O aplicativo não grava a câmera nem envia suas imagens para servidores. Depois de baixar o executável, os modelos necessários já estão no pacote.
+
+## Instalar e usar
+
+- **[Guia de instalação e uso](docs/INSTALACAO_E_USO.md):** requisitos, primeira execução, teclas, câmera, som e soluções comuns.
+- **[Guia do Google Meet](GUIA_GOOGLE_MEET_PTBR.md):** imagem com OBS Virtual Camera; voz e efeito sonoro juntos com Voicemeeter Banana.
+- **[Leia-me do pacote Windows](LEIA-ME-WINDOWS.txt):** instruções rápidas para acompanhar o executável.
+
+| Tecla | Ação |
+| --- | --- |
+| V | Ativar o efeito; no Naruto também toca o som |
+| R | Reaparecer |
+| Espaço | Capturar novamente o fundo; saia do quadro por 4 segundos |
+| F | Alternar tela cheia |
+| Q ou Esc | Fechar e liberar a câmera |
+
+Clique na janela da câmera antes de usar as teclas. Mantenha a câmera parada depois de capturar o cenário.
+
+## Personalizar o som
+
+Coloque **som.mp3** ou **som.wav** na mesma pasta de **PeraVanishCam.exe** e reabra o aplicativo. O arquivo será utilizado no modo Naruto. Se os dois existirem, o MP3 tem prioridade. Remova ou renomeie o arquivo para voltar ao som padrão.
+
+Use **TESTAR_SOM.bat** para testar o áudio sem abrir a câmera.
+
+```powershell
+.\PeraVanishCam.exe --mode naruto --som "C:\Sons\meu-efeito.mp3"
+.\PeraVanishCam.exe --teste-som
+```
+
+## Google Meet
+
+Para a imagem, instale [OBS Studio](https://obsproject.com/download), deixe o OBS fechado, abra o PeraVanishCam e escolha **OBS Virtual Camera** em **Meet → Configurações → Vídeo → Câmera**.
+
+Para transmitir **sua voz e o efeito sonoro juntos**, siga o [guia de áudio e vídeo](GUIA_GOOGLE_MEET_PTBR.md). Ele mostra os dispositivos de entrada e saída do Voicemeeter Banana e a configuração para evitar eco.
+
+<a id="apoie-com-pix"></a>
+
+## Apoie o projeto com Pix
+
+Se o **PeraVanishCam** foi útil para você, considere apoiar a manutenção e as próximas melhorias. **A contribuição é opcional e qualquer valor ajuda.** Você pode usar o aplicativo sem contribuir.
+
+| Pix | Informação |
+| --- | --- |
+| Tipo de chave | E-mail |
+| Chave | **bruno.pera@unifesp.br** |
+| Responsável por esta versão | Bruno Michel Pera |
+| Valor | Livre |
+
+Copie a chave:
+
+```text
+bruno.pera@unifesp.br
+```
+
+No aplicativo do seu banco, abra **Pix → Transferir → Chave e-mail**, cole a chave e confira os dados do destinatário antes de confirmar. Obrigado por apoiar o desenvolvimento!
+
+## Executar e compilar pelo código-fonte
+
+Instale Python 3.11 de 64 bits. No Windows, abra **INICIAR.bat**. O script prepara um ambiente isolado na pasta do projeto. Na primeira execução, as dependências e os modelos necessários são baixados.
+
+```powershell
+py -3.11 -m venv .venv-local
+.\.venv-local\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv-local\Scripts\python.exe vanish_cam.py
+```
+
+Para gerar **PeraVanishCam.exe** no Windows, use **BUILD_WINDOWS.bat**. O fluxo de GitHub Actions também testa o código, os modelos, a decodificação do áudio e o executável antes de disponibilizar o pacote em Releases.
+
+## Origem e créditos
+
+Esta edição deriva de [Nicovic17/vanish_webcam](https://github.com/Nicovic17/vanish_webcam), com continuidade a partir de [perabru/vanish_webcam](https://github.com/perabru/vanish_webcam). **A personalização, os guias em português e a manutenção desta edição são de Bruno Michel Pera.** O código e os recursos da base mantêm seus créditos originais.
+
+Veja [ORIGEM.md](ORIGEM.md) e [assets/README.md](assets/README.md). Apoio ao autor original: [PayPal](https://paypal.me/nicovic17) ou [Revolut](https://revolut.me/nicoauriemma).

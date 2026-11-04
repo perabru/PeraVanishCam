@@ -20,7 +20,7 @@ O pacote é portátil. Para mudar de pasta, copie a pasta extraída inteira. Par
 ## Primeira execução
 
 1. Feche outros aplicativos que estejam utilizando sua webcam.
-2. Escolha o modo **Normal** ou **Naruto** no menu.
+2. Escolha **Normal**, **Naruto**, **Clones das Sombras** ou **Transformação** no menu.
 3. Saia completamente do enquadramento durante 4 segundos.
 4. Aguarde a mensagem **Fundo pronto** no terminal.
 5. Volte para a câmera, mantendo o cenário e a iluminação estáveis.
@@ -29,11 +29,19 @@ O pacote é portátil. Para mudar de pasta, copie a pasta extraída inteira. Par
 
 **Naruto:** junte as palmas com os dedos lado a lado, sem entrelaçar. Mantenha as duas mãos visíveis. A pessoa desaparece com fumaça, um tronco aparece e o efeito sonoro é reproduzido.
 
+## Novos jutsus
+
+Abra os modos **3 — Clones das Sombras** ou **4 — Transformação**. Segure o selo por 0,65 segundo e abaixe as mãos antes de repetir. Use **C** para criar dois clones ao vivo, **T** para transformar na personagem, **R** para voltar e **H** para ver o guia.
+
+**[Guia ilustrado e instruções dos selos](GESTOS_NINJA.md).** A transformação usa um avatar feminino original que acompanha sua posição.
+
 ## Teclas
 
 | Tecla | Função |
 | --- | --- |
 | V | Ativar o efeito sem precisar fazer o gesto |
+| C / T | Clones / transformação nos modos 3 e 4 |
+| H | Guia dos novos selos, nos modos 3 e 4 |
 | R | Reaparecer e remover o tronco |
 | Espaço | Capturar novamente o fundo |
 | F | Alternar tela cheia |
@@ -45,7 +53,7 @@ Clique na janela da câmera antes de usar o teclado. Ao capturar novamente o fun
 
 1. Feche o aplicativo.
 2. Coloque um arquivo **som.mp3** ou **som.wav** ao lado de **PeraVanishCam.exe**.
-3. Abra o aplicativo e escolha Naruto.
+3. Abra o aplicativo e escolha Naruto, Clones ou Transformação.
 4. Pressione V para conferir o efeito com o som.
 
 O MP3 tem prioridade se os dois arquivos estiverem presentes. Para voltar ao áudio padrão, remova ou renomeie os arquivos externos. Use **TESTAR_SOM.bat** para ouvir o som sem abrir a câmera.

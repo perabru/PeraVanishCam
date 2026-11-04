@@ -8,15 +8,15 @@
 
 <p align="center"><img src="assets/peravanishcam-banner.svg" alt="PeraVanishCam — por Bruno Michel Pera" width="100%"></p>
 
-**Versão mantida e personalizada por Bruno Michel Pera.** Efeitos de desaparecimento para webcam, reconhecimento por gestos e som personalizado, com instruções em português.
+**Versão mantida e personalizada por Bruno Michel Pera.** Efeitos de desaparecimento, clones ao vivo e transformação em personagem feminina de anime, com gestos e som personalizado.
 
-[Baixar o executável (.exe)](https://github.com/perabru/PeraVanishCam/releases/latest/download/PeraVanishCam.exe) · [Instalar e começar](docs/INSTALACAO_E_USO.md) · [Usar no Google Meet](GUIA_GOOGLE_MEET_PTBR.md) · [Apoiar com Pix](#apoie-com-pix)
+[Baixar o executável (.exe)](https://github.com/perabru/PeraVanishCam/releases/latest/download/PeraVanishCam.exe) · [Instalar e começar](docs/INSTALACAO_E_USO.md) · [Usar no Google Meet](GUIA_GOOGLE_MEET_PTBR.md) · [Novos gestos ninja](docs/GESTOS_NINJA.md) · [Apoiar com Pix](#apoie-com-pix)
 
 ## Começar em cinco passos
 
 1. Clique em **[BAIXAR EXECUTÁVEL PARA WINDOWS (.EXE)](https://github.com/perabru/PeraVanishCam/releases/latest/download/PeraVanishCam.exe)** no início desta página.
 2. Abra **PeraVanishCam.exe** com dois cliques. A versão pronta não precisa de Python. Se preferir o pacote ZIP com os guias, extraia todos os arquivos antes de abrir.
-3. Escolha **1 — Normal** ou **2 — Naruto**.
+3. Escolha **1 — Normal**, **2 — Naruto**, **3 — Clones das Sombras** ou **4 — Transformação**.
 4. Saia do enquadramento por **4 segundos** para capturar o fundo. Depois volte.
 5. Faça o gesto do modo escolhido ou pressione **V** na janela da câmera.
 
@@ -24,8 +24,16 @@
 | --- | --- | --- |
 | Normal | Indicador e médio formando V | Desaparecimento gradual |
 | Naruto | Palmas juntas, dedos lado a lado, duas mãos visíveis | Fumaça, tronco e som ao desaparecer |
+| Clones das Sombras | Indicador e médio das duas mãos formando uma cruz (+), por 0,65 s | Dois clones ao vivo, um de cada lado |
+| Transformação | Duplas de indicador e médio juntos, lado a lado e para cima, por 0,65 s | Personagem feminina de anime com fumaça |
 
 O vídeo é processado no seu computador. O aplicativo não grava a câmera nem envia suas imagens para servidores. Depois de baixar o executável, os modelos necessários já estão no pacote.
+
+## Novos selos ninja
+
+**[Veja o guia ilustrado dos gestos](docs/GESTOS_NINJA.md).** Nos modos 3 e 4, os dois selos ficam disponíveis. Use **C** para clones, **T** para transformar, **R** para voltar e **H** para abrir o guia visual. Abaixe as mãos entre um selo e outro.
+
+A transformação utiliza um avatar feminino original, com fundo transparente, que acompanha sua posição na imagem. Você pode colocar `personagem.png` ao lado do executável para usar outro avatar.
 
 ## Instalar e usar
 
@@ -35,7 +43,9 @@ O vídeo é processado no seu computador. O aplicativo não grava a câmera nem 
 
 | Tecla | Ação |
 | --- | --- |
-| V | Ativar o efeito; no Naruto também toca o som |
+| V | Ativar o efeito selecionado |
+| C / T | Clones / transformação nos modos 3 e 4 |
+| H | Guia dos selos nos modos 3 e 4 |
 | R | Reaparecer |
 | Espaço | Capturar novamente o fundo; saia do quadro por 4 segundos |
 | F | Alternar tela cheia |
@@ -45,7 +55,7 @@ Clique na janela da câmera antes de usar as teclas. Mantenha a câmera parada d
 
 ## Personalizar o som
 
-Coloque **som.mp3** ou **som.wav** na mesma pasta de **PeraVanishCam.exe** e reabra o aplicativo. O arquivo será utilizado no modo Naruto. Se os dois existirem, o MP3 tem prioridade. Remova ou renomeie o arquivo para voltar ao som padrão.
+Coloque **som.mp3** ou **som.wav** na mesma pasta de **PeraVanishCam.exe** e reabra o aplicativo. O arquivo será utilizado no modo Naruto e nos novos jutsus de clones e transformação. Se os dois existirem, o MP3 tem prioridade. Remova ou renomeie o arquivo para voltar ao som padrão.
 
 Use **TESTAR_SOM.bat** para testar o áudio sem abrir a câmera.
 
@@ -91,7 +101,7 @@ py -3.11 -m venv .venv-local
 .\.venv-local\Scripts\python.exe vanish_cam.py
 ```
 
-Para gerar **PeraVanishCam.exe** no Windows, use **BUILD_WINDOWS.bat**. O fluxo de GitHub Actions também testa o código, os modelos, a decodificação do áudio e o executável antes de disponibilizar o pacote em Releases.
+Para gerar **PeraVanishCam.exe** no Windows, use **BUILD_WINDOWS.bat**. O fluxo de GitHub Actions também testa o código, os modelos, a decodificação do áudio, o avatar, os novos efeitos e o executável antes de disponibilizar o pacote em Releases.
 
 ## Origem e créditos
 

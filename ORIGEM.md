@@ -12,6 +12,8 @@ Esta edição adiciona identidade própria, instruções de instalação e uso e
 
 A imagem do tronco e a fumaça mantêm a descrição de origem em [assets/README.md](assets/README.md).
 
+Os modos de clones ao vivo, a transformação por avatar e o guia dos novos selos foram adicionados nesta edição. A personagem feminina é original, gerada para o aplicativo; sua descrição está em assets/README.md.
+
 O banner vetorial `assets/peravanishcam-banner.svg` foi criado para esta edição.
 
 Os links de apoio do autor original são preservados: [PayPal](https://paypal.me/nicovic17) e [Revolut](https://revolut.me/nicoauriemma).

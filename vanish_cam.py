@@ -77,7 +77,7 @@ def positive_fps(value: str) -> float:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Escolha o efeito Normal ou Naruto para sua webcam."
+        description="Normal, Naruto, Clones das Sombras e Transformacao para sua webcam."
     )
     parser.add_argument("--camera", type=int, default=0, help="Numero da webcam (0 = primeira camera)")
     parser.add_argument("--width", type=int, default=960, help="Largura do video")
@@ -99,15 +99,16 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--virtual-device", help="Nome do dispositivo de camera virtual")
     parser.add_argument(
-        "--mode", choices=("normal", "naruto"),
-        help="Abrir diretamente o modo normal ou naruto",
+        "--mode", choices=("normal", "naruto", "clones", "transform"),
+        help="Abrir diretamente normal, naruto, clones ou transform",
     )
     parser.add_argument(
         "--gesture-debug", action="store_true",
         help="Mostrar diagnostico de gestos no terminal (sem texto no video)",
     )
     parser.add_argument("--self-test", action="store_true", help=argparse.SUPPRESS)
-    parser.add_argument("--som", dest="sound", type=Path, help="Arquivo MP3 ou WAV para o efeito Naruto")
+    parser.add_argument("--som", dest="sound", type=Path, help="Arquivo MP3 ou WAV para os efeitos ninja")
+    parser.add_argument("--personagem", dest="avatar", type=Path, help="PNG transparente para a transformacao")
     parser.add_argument("--teste-som", action="store_true", help="Tocar o efeito uma vez, sem abrir a camera")
     return parser.parse_args()
 
@@ -116,24 +117,26 @@ def choose_mode() -> str | None:
     """Simple keyboard/mouse menu shown before the clean camera feed."""
     title = "PeraVanishCam - Escolha o efeito"
     selected = [None]
-    window = np.zeros((420, 700, 3), dtype=np.uint8)
+    window = np.zeros((610, 760, 3), dtype=np.uint8)
     window[:] = (26, 29, 34)
-    cv2.putText(window, "PERAVANISHCAM", (68, 88),
+    cv2.putText(window, "PERAVANISHCAM", (65, 65),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.85, (236, 239, 242), 2, cv2.LINE_AA)
     buttons = (
-        ("normal", "1  NORMAL VANISH", "Gesto em V  /  dissolver imagem", 140),
-        ("naruto", "2  NARUTO VANISH", "Maos juntas  /  tronco e fumaca", 260),
+        ("normal", "1  NORMAL VANISH", "Gesto em V  /  dissolver imagem", 120),
+        ("naruto", "2  NARUTO VANISH", "Maos juntas  /  tronco e fumaca", 235),
+        ("clones", "3  CLONES DAS SOMBRAS", "Selo cruzado (+)  /  clones ao vivo", 350),
+        ("transform", "4  TRANSFORMACAO", "Selo do Tigre  /  personagem feminina", 465),
     )
     for mode, heading, detail, top in buttons:
-        cv2.rectangle(window, (65, top), (635, top + 94), (48, 54, 62), -1, cv2.LINE_AA)
-        cv2.rectangle(window, (65, top), (635, top + 94), (111, 142, 153), 2, cv2.LINE_AA)
+        cv2.rectangle(window, (65, top), (695, top + 94), (48, 54, 62), -1, cv2.LINE_AA)
+        cv2.rectangle(window, (65, top), (695, top + 94), (111, 142, 153), 2, cv2.LINE_AA)
         cv2.putText(window, heading, (90, top + 38),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.77, (240, 245, 247), 2, cv2.LINE_AA)
         cv2.putText(window, detail, (90, top + 68),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.53, (179, 195, 201), 1, cv2.LINE_AA)
 
     def on_mouse(event, x, y, flags, userdata):
-        if event == cv2.EVENT_LBUTTONUP and 65 <= x <= 635:
+        if event == cv2.EVENT_LBUTTONUP and 65 <= x <= 695:
             for mode, _, _, top in buttons:
                 if top <= y <= top + 94:
                     selected[0] = mode
@@ -148,6 +151,10 @@ def choose_mode() -> str | None:
                 selected[0] = "normal"
             elif key == ord("2"):
                 selected[0] = "naruto"
+            elif key == ord("3"):
+                selected[0] = "clones"
+            elif key == ord("4"):
+                selected[0] = "transform"
             elif key in (ord("q"), 27):
                 return None
             if cv2.getWindowProperty(title, cv2.WND_PROP_VISIBLE) < 1:
@@ -553,11 +560,23 @@ class MultiViewHandLandmarker:
         self.retry_cursor = 0
 
     def recognize_joined_hands(self, image: mp.Image, timestamp_ms: int) -> bool:
+        return bool(self._recognize_hands(image, timestamp_ms, joined_hands_from_landmarks))
+
+    def recognize_seal(self, image: mp.Image, timestamp_ms: int) -> str | None:
+        try:
+            from .jutsu_gestures import classify_hand_seal
+        except ImportError:
+            from jutsu_gestures import classify_hand_seal
+        match = self._recognize_hands(image, timestamp_ms, classify_hand_seal)
+        return match if isinstance(match, str) else None
+
+    def _recognize_hands(self, image: mp.Image, timestamp_ms: int, predicate):
         result = self.primary.detect_for_video(image, timestamp_ms)
         self.last_hand_count = len(result.hand_landmarks)
-        if joined_hands_from_landmarks(result.hand_landmarks, image.width, image.height):
+        match = predicate(result.hand_landmarks, image.width, image.height)
+        if match:
             self.preferred_view = None
-            return True
+            return match
         if timestamp_ms < self.next_retry_ms:
             return False
 
@@ -587,10 +606,11 @@ class MultiViewHandLandmarker:
             )
             result = self.alternate.detect(rotated)
             self.last_hand_count = max(self.last_hand_count, len(result.hand_landmarks))
-            if joined_hands_from_landmarks(result.hand_landmarks, rotated.width, rotated.height):
+            match = predicate(result.hand_landmarks, rotated.width, rotated.height)
+            if match:
                 self.preferred_view = (crop, rotation)
                 self.next_retry_ms = timestamp_ms + 90
-                return True
+                return match
         self.preferred_view = None
         self.next_retry_ms = timestamp_ms + 80
         return False
@@ -662,6 +682,11 @@ def self_test() -> int:
             recognizer.close()
         finally:
             segmenter.close()
+    try:
+        from .ninja_runtime import self_test_effects
+    except ImportError:
+        from ninja_runtime import self_test_effects
+    self_test_effects()
     print("[Webcam] Teste concluido: modelos, imagens e audio verificados.")
     return 0
 
@@ -683,6 +708,12 @@ def run() -> int:
     if mode is None:
         return 0
     with ExitStack() as resources:
+        if mode in ("clones", "transform"):
+            try:
+                from .ninja_runtime import run_ninja_camera
+            except ImportError:
+                from ninja_runtime import run_ninja_camera
+            return run_ninja_camera(args, resources, mode, sys.modules[__name__])
         return run_camera(args, resources, mode)
 
 

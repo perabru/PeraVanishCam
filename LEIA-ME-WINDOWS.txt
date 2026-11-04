@@ -1,13 +1,23 @@
 PeraVanishCam — Windows 64 bits
 
 1. Extraia o ZIP e abra PeraVanishCam.exe. Não é preciso instalar Python.
-2. Escolha 1 (Normal) ou 2 (Naruto).
+2. Escolha 1 (Normal), 2 (Naruto), 3 (Clones) ou 4 (Transformação).
 3. Saia do enquadramento por 4 segundos para capturar o fundo.
-4. Volte e faça o gesto: V com os dedos no Normal; palmas juntas no Naruto.
+4. Volte e faça o gesto do modo escolhido. O guia dos novos selos está
+em docs/GESTOS_NINJA.md e na tecla H dos modos 3 e 4.
 
 TECLAS: V desaparecer; R reaparecer; Espaço novo fundo; F tela cheia;
 Q ou Esc fechar. Clique na janela da câmera antes de utilizar o teclado.
-O som toca ao desaparecer no modo Naruto, inclusive ao pressionar V.
+Nos modos Naruto, Clones e Transformação, o som toca ao ativar o efeito.
+
+NOVOS JUTSUS — MODOS 3 E 4
+Clones: estique indicador e médio nas duas mãos e forme uma cruz (+).
+Transformação: estique indicador e médio juntos, nas duas mãos lado a lado,
+apontando para cima. Segure o selo por 0,65 segundo e depois abaixe as mãos.
+C cria clones; T transforma; R volta ao normal; H mostra o guia visual.
+A transformação usa uma personagem feminina de anime. Para trocar o
+avatar, coloque personagem.png com transparência ao lado do executável.
+Os selos são adaptações inspiradas no anime para reconhecimento pela webcam.
 
 SOM PERSONALIZADO
 Coloque som.mp3 ou som.wav na mesma pasta de PeraVanishCam.exe e reabra o

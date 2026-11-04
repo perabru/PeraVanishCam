@@ -7,7 +7,8 @@ import numpy as np
 
 from local_app import vanish_cam as app
 from local_app.naruto_effect import (
-    EFFECT_SECONDS, falling_log_anchor, joined_hands_from_landmarks,
+    EFFECT_SECONDS, LOG_CACHE_MAX_BYTES, LOG_CACHE_MAX_ENTRIES,
+    falling_log_anchor, joined_hands_from_landmarks,
     landed_log_anchor, load_log, overlay_log, render_substitution, substitution_anchor,
     _smoke_layer,
 )
@@ -173,7 +174,26 @@ class SmokeQualityTests(unittest.TestCase):
         for height in range(10, 50):
             output = np.zeros((80, 80, 3), np.uint8)
             overlay_log(output, sprite, (40, 40, height), cache=cache)
-            self.assertLessEqual(len(cache), 24)
+            self.assertLessEqual(len(cache), LOG_CACHE_MAX_ENTRIES)
+            self.assertLessEqual(sum(image.nbytes for image in cache.values()),
+                                 LOG_CACHE_MAX_BYTES)
+        uncached = np.zeros((80, 80, 3), np.uint8)
+        overlay_log(uncached, sprite, (40, 40, 49))
+        np.testing.assert_array_equal(output, uncached)
+
+    def test_log_cache_obeys_byte_budget_and_skips_oversized_sprites(self):
+        # A smaller budget exercises native-resolution memory accounting
+        # without allocating hundreds of MiB for a Full HD regression.
+        sprite = np.full((8, 12, 4), 255, np.uint8)
+        cache = {}
+        budget = 12 * 1024
+        with patch('local_app.naruto_effect.LOG_CACHE_MAX_BYTES', budget):
+            for height in range(10, 50):
+                output = np.zeros((80, 80, 3), np.uint8)
+                overlay_log(output, sprite, (40, 40, height), cache=cache)
+                self.assertLessEqual(len(cache), LOG_CACHE_MAX_ENTRIES)
+                self.assertLessEqual(sum(image.nbytes for image in cache.values()), budget)
+        self.assertNotIn(49, cache)
         uncached = np.zeros((80, 80, 3), np.uint8)
         overlay_log(uncached, sprite, (40, 40, 49))
         np.testing.assert_array_equal(output, uncached)
@@ -219,6 +239,7 @@ class NarutoVideoLoopTests(unittest.TestCase):
             mocks.enter_context(patch.object(app.cv2, "destroyAllWindows"))
             mocks.enter_context(patch.object(app.cv2, "imshow", side_effect=lambda name, frame: preview.append(frame.copy())))
             mocks.enter_context(patch.object(app.cv2, "waitKey", side_effect=(0, 0, 0, 0, ord("q"))))
+            mocks.enter_context(patch.object(app.cv2, "getWindowProperty", return_value=1))
             mocks.enter_context(patch.object(app.cv2, "putText", side_effect=AssertionError("Overlay vietato")))
             mocks.enter_context(patch("builtins.print"))
             self.assertEqual(app.run(), 0)

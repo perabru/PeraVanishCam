@@ -758,6 +758,7 @@ def run_camera(args: argparse.Namespace, resources: ExitStack, mode: str) -> int
     virtual_camera_initialized = False
     calibration_remaining = None
     last_gesture_report = 0.0
+    frame_shape: tuple[int, int] | None = None
     started = time.perf_counter()
     print("[Webcam] Saia do enquadramento por 4 segundos para capturar o fundo.")
     print("[Webcam] Teclas na janela da camera: ESPACO novo fundo, R reaparecer, V desaparecer, F tela cheia, Q sair.")
@@ -765,7 +766,7 @@ def run_camera(args: argparse.Namespace, resources: ExitStack, mode: str) -> int
     try:
         while True:
             ok, camera_frame = capture.read()
-            if not ok:
+            if not ok or camera_frame is None:
                 raise RuntimeError("A webcam parou de enviar imagens.")
 
             if not args.no_mirror:
@@ -781,6 +782,23 @@ def run_camera(args: argparse.Namespace, resources: ExitStack, mode: str) -> int
             if mode == "normal" and (dissolve_field is None or dissolve_field.shape != (height, width)):
                 dissolve_field, sparkle_noise = make_dissolve_fields(height, width)
             now = time.perf_counter()
+            current_shape = (height, width)
+            if frame_shape is not None and current_shape != frame_shape:
+                # A driver can renegotiate its frame size after opening. The
+                # old background/masks cannot be composited with the new size.
+                background = None
+                background_samples.clear()
+                state.phase = "calibrating"
+                state.calibration_started = now
+                state.vanish_started = None
+                last_mask = None
+                last_mask_at = float("-inf")
+                log_anchor = None
+                log_cache.clear()
+                vanished_frame = None
+                calibration_remaining = None
+                print("[Webcam] Resolucao alterada. Saia do quadro por 4 segundos para capturar o novo fundo.")
+            frame_shape = current_shape
 
             elapsed_ms = int((now - started) * 1000)
             mp_image = None
@@ -892,7 +910,7 @@ def run_camera(args: argparse.Namespace, resources: ExitStack, mode: str) -> int
             cv2.imshow(WINDOW_NAME, display)
 
             key = cv2.waitKey(1) & 0xFF
-            if key in (ord("q"), 27):
+            if key in (ord("q"), 27) or cv2.getWindowProperty(WINDOW_NAME, cv2.WND_PROP_VISIBLE) < 1:
                 break
             if key == ord(" "):
                 state.phase = "calibrating"

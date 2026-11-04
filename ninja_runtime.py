@@ -101,6 +101,7 @@ def run_ninja_camera(args, resources: ExitStack, mode: str, api) -> int:
     log_cache: dict[int, np.ndarray] = {}
     log_anchor = None
     background, mask = None, None
+    frame_shape = None
     samples = []
     now = time.perf_counter()
     started = calibration_started = now
@@ -128,13 +129,18 @@ def run_ninja_camera(args, resources: ExitStack, mode: str, api) -> int:
                 virtual_initialized = True
                 if virtual is not None:
                     resources.callback(virtual.close)
-            if background is not None and background.shape != frame.shape:
+            current_shape = frame.shape[:2]
+            if frame_shape is not None and current_shape != frame_shape:
                 background, mask, log_anchor = None, None, None
                 calibration_started, last_countdown = now, None
                 samples.clear()
+                log_cache.clear()
                 state.reset()
                 temporal_mask.reset()
                 gate.disarm(now)
+                last_mask = float('-inf')
+                print('[PeraVanishCam] Resolucao alterada. Saia do quadro por 4 segundos para capturar o novo fundo.')
+            frame_shape = current_shape
             image = None
             timestamp_ms = int((now-started)*1000)
             if background is None:

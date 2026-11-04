@@ -124,6 +124,56 @@ class EffectTests(unittest.TestCase):
 
 
 class CameraTests(unittest.TestCase):
+    def test_resolution_changes_restart_calibration_and_allow_new_jutsu(self):
+        for during_calibration in (False, True):
+            with self.subTest(during_calibration=during_calibration):
+                times = ([3.6, 3.7, 7.8, 8.0, 8.2, 12.0, 12.1]
+                         if during_calibration else
+                         [.1, 4.1, 4.3, 4.5, 8.6, 8.8, 9.0, 13.0, 13.1])
+                change_at = 1 if during_calibration else 3
+                frames = [np.full(((24, 40, 3) if i < change_at else (30, 50, 3)),
+                                  10*(i+1), np.uint8) for i in range(len(times))]
+                keys = ([0, 0, 0, ord('t'), 0, 0, ord('q')]
+                        if during_calibration else
+                        [0, 0, ord('c'), 0, 0, ord('t'), 0, 0, ord('q')])
+                clock, cursor, sent = [0.0], [0], []
+                capture, segmenter, tracker, virtual, sound = Mock(), Mock(), Mock(), Mock(), Mock()
+                tracker.recognize_seal.return_value = None
+                def read_frame():
+                    i = cursor[0]
+                    cursor[0] += 1
+                    clock[0] = times[i]
+                    return True, frames[i].copy()
+                capture.read.side_effect = read_frame
+                api = SimpleNamespace(download_models=Mock(), open_camera=Mock(return_value=capture),
+                                      create_tasks=Mock(return_value=(segmenter, tracker)),
+                                      open_virtual_camera=Mock(return_value=virtual),
+                                      person_mask=lambda _, image, t, w, h: np.ones((h, w), np.float32),
+                                      send_virtual_frame=lambda _, f: sent.append(f.copy()),
+                                      set_fullscreen=Mock(), WINDOW_NAME='test', CALIBRATION_SECONDS=4,
+                                      BACKGROUND_SAMPLE_SECONDS=.55,
+                                      mp=SimpleNamespace(Image=Mock(), ImageFormat=SimpleNamespace(SRGB='RGB')))
+                args = argparse.Namespace(camera=0, width=40, height=24, fps=30, fullscreen=False,
+                                          no_mirror=True, gesture_debug=False, sound=None)
+                with ExitStack() as mocks:
+                    mocks.enter_context(patch.object(runtime.time, 'perf_counter', side_effect=lambda: clock[0]))
+                    for name in ('namedWindow', 'resizeWindow', 'destroyAllWindows', 'imshow'):
+                        mocks.enter_context(patch.object(runtime.cv2, name))
+                    mocks.enter_context(patch.object(runtime.cv2, 'getWindowProperty', return_value=1))
+                    mocks.enter_context(patch.object(runtime.cv2, 'waitKey', side_effect=keys))
+                    mocks.enter_context(patch.object(runtime, 'VanishSound', return_value=sound))
+                    mocks.enter_context(patch('builtins.print'))
+                    with ExitStack() as resources:
+                        self.assertEqual(runtime.run_ninja_camera(args, resources, 'clones', api), 0)
+                np.testing.assert_array_equal(sent[change_at], frames[change_at])
+                new_background = frames[2 if during_calibration else 4]
+                mask = np.ones((30, 50), np.float32)
+                expected = render_substitution(frames[-1], new_background, mask, load_log(),
+                                               substitution_anchor(mask), EFFECT_SECONDS+.1)
+                np.testing.assert_array_equal(sent[-1], expected)
+                capture.release.assert_called_once()
+                virtual.close.assert_called_once()
+
     def test_cross_and_tiger_trigger_clones_and_persistent_log_in_virtual_output(self):
         frame, background, mask = EffectTests.scene()
         capture, segmenter, tracker = Mock(), Mock(), Mock()

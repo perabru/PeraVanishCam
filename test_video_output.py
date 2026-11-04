@@ -62,7 +62,7 @@ class VirtualCameraTests(unittest.TestCase):
 
 
 class VideoLoopTests(unittest.TestCase):
-    def run_mock_video(self, send_error=None, gesture=("No_Hand", 0.0)):
+    def run_mock_video(self, send_error=None, gesture=("No_Hand", 0.0), window_visible=1):
         capture = Mock()
         frames = [np.full((24, 40, 3), color, np.uint8) for color in (10, 40, 80, 120, 160)]
         capture.read.side_effect = [(True, frame) for frame in frames]
@@ -82,6 +82,7 @@ class VideoLoopTests(unittest.TestCase):
             mocks.enter_context(patch.object(app.time, "perf_counter", side_effect=times))
             mocks.enter_context(patch.object(app.cv2, "namedWindow"))
             mocks.enter_context(patch.object(app.cv2, "resizeWindow"))
+            mocks.enter_context(patch.object(app.cv2, "getWindowProperty", return_value=window_visible))
             destroy = mocks.enter_context(patch.object(app.cv2, "destroyAllWindows"))
             mocks.enter_context(patch.object(app.cv2, "imshow", side_effect=lambda name, frame: displayed.append(frame.copy())))
             keys = (0, 0, ord("v") if gesture[0] != "Victory" else 0, 0, ord("q"))
@@ -120,6 +121,60 @@ class VideoLoopTests(unittest.TestCase):
 
     def test_all_devices_close_on_send_error(self):
         self.run_mock_video(send_error=RuntimeError("send failed"))
+
+    def test_closing_preview_window_stops_capture_and_releases_devices(self):
+        _, camera, displayed = self.run_mock_video(window_visible=0)
+        self.assertEqual(len(displayed), 1)
+        self.assertEqual(camera.send.call_count, 1)
+
+    def test_resolution_change_recalibrates_before_compositing(self):
+        for mode in ("normal", "naruto"):
+            for during_calibration in (False, True):
+                with self.subTest(mode=mode, during_calibration=during_calibration):
+                    times = ([3.6, 3.7, 7.8, 8.0, 8.2, 12.0, 12.1]
+                             if during_calibration else
+                             [.1, 4.1, 4.3, 4.5, 8.6, 8.8, 9.0, 13.0, 13.1])
+                    change_at = 1 if during_calibration else 3
+                    frames = [np.full(((24, 40, 3) if i < change_at else (30, 50, 3)),
+                                      10*(i+1), np.uint8) for i in range(len(times))]
+                    keys = ([0, 0, 0, ord("v"), 0, 0, ord("q")]
+                            if during_calibration else
+                            [0, 0, ord("v"), 0, 0, ord("v"), 0, 0, ord("q")])
+                    clock, cursor, sent = [0.0], [0], []
+                    capture, segmenter, recognizer, sound = Mock(), Mock(), Mock(), Mock()
+                    recognizer.recognize_joined_hands.return_value = False
+                    def read_frame():
+                        i = cursor[0]
+                        cursor[0] += 1
+                        clock[0] = times[i]
+                        return True, frames[i].copy()
+                    capture.read.side_effect = read_frame
+                    with ExitStack() as mocks:
+                        mocks.enter_context(patch.object(app, "parse_args", return_value=arguments(mode=mode)))
+                        mocks.enter_context(patch.object(app, "download_models"))
+                        mocks.enter_context(patch.object(app, "open_camera", return_value=capture))
+                        mocks.enter_context(patch.object(app, "create_tasks", return_value=(segmenter, recognizer)))
+                        mocks.enter_context(patch.object(app, "open_virtual_camera", return_value=Mock()))
+                        mocks.enter_context(patch.object(app, "send_virtual_frame", side_effect=lambda _, f: sent.append(f.copy())))
+                        mocks.enter_context(patch.object(app, "recognize_gesture", return_value=("No_Hand", 0)))
+                        mocks.enter_context(patch.object(app, "person_mask", side_effect=lambda _, image, t, w, h: np.ones((h, w), np.float32)))
+                        mocks.enter_context(patch.object(app, "VanishSound", return_value=sound))
+                        mocks.enter_context(patch.object(app.time, "perf_counter", side_effect=lambda: clock[0]))
+                        for name in ("namedWindow", "resizeWindow", "imshow", "destroyAllWindows"):
+                            mocks.enter_context(patch.object(app.cv2, name))
+                        mocks.enter_context(patch.object(app.cv2, "getWindowProperty", return_value=1))
+                        mocks.enter_context(patch.object(app.cv2, "waitKey", side_effect=keys))
+                        mocks.enter_context(patch("builtins.print"))
+                        self.assertEqual(app.run(), 0)
+                    # The changed frame starts a fresh countdown instead of
+                    # mixing incompatible background samples or silhouettes.
+                    np.testing.assert_array_equal(sent[change_at], frames[change_at])
+                    self.assertEqual(sent[-1].shape, (30, 50, 3))
+                    new_background = frames[2 if during_calibration else 4]
+                    if mode == "normal":
+                        np.testing.assert_array_equal(sent[-1], new_background)
+                    else:
+                        self.assertFalse(np.array_equal(sent[-1], frames[-1]))
 
 
 if __name__ == "__main__":

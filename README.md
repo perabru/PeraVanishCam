@@ -111,6 +111,8 @@ py -3.11 -m venv .venv-local
 
 Para gerar **PeraVanishCam.exe** no Windows, use **BUILD_WINDOWS.bat**. O fluxo de GitHub Actions também testa o código, os modelos, a decodificação do áudio, os efeitos e o executável antes de disponibilizar o pacote em Releases.
 
+Os scripts selecionam **Python 3.11 de 64 bits**, a mesma versão usada na compilação publicada. Se já existir uma pasta `.venv-local` criada com outra versão de Python, renomeie essa pasta e abra **INICIAR.bat** novamente para preparar o ambiente correto.
+
 ## Origem e créditos
 
 Esta edição deriva de [Nicovic17/vanish_webcam](https://github.com/Nicovic17/vanish_webcam), com continuidade a partir de [perabru/vanish_webcam](https://github.com/perabru/vanish_webcam). **A personalização, os guias em português e a manutenção desta edição são de Bruno Michel Pera.** O código e os recursos da base mantêm seus créditos originais.

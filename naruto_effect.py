@@ -17,6 +17,8 @@ except ImportError:
 
 EFFECT_SECONDS = 1.80
 LOG_PATH = Path(__file__).resolve().parent / "assets" / "substitution_log.png"
+LOG_CACHE_MAX_BYTES = 32 * 1024 * 1024
+LOG_CACHE_MAX_ENTRIES = 8
 
 
 def joined_hands_from_landmarks(hands, width: int, height: int) -> bool:
@@ -91,9 +93,14 @@ def overlay_log(frame: np.ndarray, sprite: np.ndarray, anchor: tuple[int, int, i
         sized = np.clip(cv2.resize(premultiplied, (width, height), interpolation=interpolation), 0, 1)
         # Cubic ringing must never create a color brighter than its coverage.
         sized[:, :, :3] = np.minimum(sized[:, :, :3], sized[:, :, 3:4])
-        if cache is not None:
-            if len(cache) >= 24:
-                cache.clear()
+        if cache is not None and sized.nbytes <= LOG_CACHE_MAX_BYTES:
+            # Native-resolution float RGBA sprites can each occupy several
+            # MiB. Bound bytes as well as entries when the person changes size.
+            cached_bytes = sum(image.nbytes for image in cache.values())
+            while cache and (len(cache) >= LOG_CACHE_MAX_ENTRIES or
+                             cached_bytes + sized.nbytes > LOG_CACHE_MAX_BYTES):
+                oldest = cache.pop(next(iter(cache)))
+                cached_bytes -= oldest.nbytes
             cache[height] = sized
     x1, y1 = cx - width // 2, cy - height // 2
     x2, y2 = x1 + width, y1 + height

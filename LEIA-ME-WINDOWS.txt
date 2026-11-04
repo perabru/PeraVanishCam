@@ -1,5 +1,12 @@
 PeraVanishCam — Windows 64 bits
 
+CORRECOES DESTA REVISAO
+Fechar a janela pelo X encerra a captura e libera a webcam.
+Se a webcam mudar a resolucao, o programa captura o fundo novamente;
+saia do enquadramento pelos 4 segundos indicados no terminal.
+O efeito do tronco usa menos memoria ao ser repetido em Full HD.
+Os scripts do codigo-fonte selecionam Python 3.11 de 64 bits.
+
 1. Extraia o ZIP e abra PeraVanishCam.exe. Não é preciso instalar Python.
 2. Escolha 1 (Normal), 2 (Naruto) ou 3 (Clones das Sombras).
 3. Saia do enquadramento por 4 segundos para capturar o fundo.

@@ -1,9 +1,7 @@
 """Geometry, visual compositing and camera-output regression tests for anime jutsus."""
 import argparse
-import tempfile
 import unittest
 from contextlib import ExitStack
-from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
@@ -13,6 +11,7 @@ import numpy as np
 from local_app import anime_effects as effects
 from local_app import ninja_runtime as runtime
 from local_app.jutsu_gestures import classify_hand_seal, SealGate
+from local_app.naruto_effect import load_log, render_substitution, substitution_anchor
 
 
 def hand(cx=300, cy=300, angle=0, gap=.12, open_palm=False):
@@ -33,7 +32,7 @@ def hand(cx=300, cy=300, angle=0, gap=.12, open_palm=False):
 class SealTests(unittest.TestCase):
     def test_cross_and_tiger_are_distinct_under_rotation_scale_and_mirror(self):
         poses = [('clones', [hand(), hand(245, 245, 90)]),
-                 ('transform', [hand(), hand(345, 300)])]
+                 ('substitution', [hand(), hand(345, 300)])]
         for expected, pair in poses:
             for angle in (0, .45, 1.4, 2.8):
                 for scale in (.6, 1.2):
@@ -64,8 +63,8 @@ class SealTests(unittest.TestCase):
         self.assertIsNone(gate.update('clones', 1.9))
         self.assertIsNone(gate.update(None, 2.0))
         self.assertIsNone(gate.update(None, 2.35))
-        self.assertIsNone(gate.update('transform', 2.4))
-        self.assertEqual(gate.update('transform', 3.06), 'transform')
+        self.assertIsNone(gate.update('substitution', 2.4))
+        self.assertEqual(gate.update('substitution', 3.06), 'substitution')
 
     def test_brief_detection_dropout_is_tolerated_but_a_long_gap_resets_hold(self):
         gate = SealGate()
@@ -99,13 +98,9 @@ class EffectTests(unittest.TestCase):
         self.assertTrue(np.any(live[:, 170:] != out[:, 170:]))
         np.testing.assert_array_equal(out[0, 0], background[0, 0])
 
-    def test_avatar_is_rgba_and_transformation_removes_original_person(self):
-        sprite = effects.load_avatar()
-        self.assertEqual(sprite.shape[2], 4)
-        self.assertEqual(int(sprite[:, :, 3].min()), 0)
-        self.assertGreater(int(sprite[:, :, 3].max()), 245)
+    def test_substitution_removes_person_and_leaves_log_after_smoke(self):
         frame, background, mask = self.scene()
-        out = effects.render_transformation(frame, background, mask, sprite, 2)
+        out = render_substitution(frame, background, mask, load_log(), substitution_anchor(mask), 2)
         self.assertEqual(out.shape, frame.shape)
         self.assertEqual(out.dtype, np.uint8)
         self.assertFalse(np.array_equal(out, frame))
@@ -113,14 +108,9 @@ class EffectTests(unittest.TestCase):
         np.testing.assert_array_equal(out[0, 0], background[0, 0])
         self.assertFalse(np.any(np.all(out == (50, 100, 205), axis=2)))
 
-    def test_empty_masks_and_invalid_avatar_are_handled(self):
+    def test_empty_mask_keeps_live_camera_in_clone_mode(self):
         frame, background, mask = self.scene(); mask[:] = 0
         np.testing.assert_array_equal(effects.render_clones(frame, background, mask, 2), frame)
-        np.testing.assert_array_equal(effects.render_transformation(frame, background, mask, effects.load_avatar(), 2), background)
-        with tempfile.TemporaryDirectory() as folder:
-            bad = Path(folder)/'opaque.png'; cv2.imwrite(str(bad), np.full((16, 16, 3), 100, np.uint8))
-            with self.assertRaisesRegex(RuntimeError, 'transparencia'):
-                effects.load_avatar(bad)
 
     def test_smoke_finishes_and_help_does_not_modify_video(self):
         frame, background, mask = self.scene()
@@ -128,12 +118,48 @@ class EffectTests(unittest.TestCase):
         late = effects.render_clones(frame, background, mask, 2)
         self.assertFalse(np.array_equal(early, late))
         self.assertEqual(runtime.gesture_help().shape, (470, 820, 3))
-        state = runtime.NinjaState(); state.activate('transform', 1); state.reset()
+        state = runtime.NinjaState(); state.activate('substitution', 1); state.reset()
         self.assertIsNone(state.active)
-        self.assertEqual(state.selected, 'transform')
+        self.assertEqual(state.selected, 'substitution')
 
 
 class CameraTests(unittest.TestCase):
+    def test_cross_and_tiger_trigger_clones_and_persistent_log_in_virtual_output(self):
+        frame, background, mask = EffectTests.scene()
+        capture, segmenter, tracker = Mock(), Mock(), Mock()
+        capture.read.side_effect = [(True, f.copy()) for f in [background]*2+[frame]*8]
+        tracker.recognize_seal.side_effect = ['clones', 'clones', None, None,
+                                             'substitution', 'substitution', None, None]
+        virtual, sound, sent = Mock(), Mock(), []
+        api = SimpleNamespace(download_models=Mock(), open_camera=Mock(return_value=capture),
+                              create_tasks=Mock(return_value=(segmenter, tracker)),
+                              open_virtual_camera=Mock(return_value=virtual),
+                              person_mask=Mock(return_value=mask),
+                              send_virtual_frame=lambda camera, image: sent.append(image.copy()),
+                              set_fullscreen=Mock(), WINDOW_NAME='test', CALIBRATION_SECONDS=4,
+                              BACKGROUND_SAMPLE_SECONDS=.55,
+                              mp=SimpleNamespace(Image=Mock(), ImageFormat=SimpleNamespace(SRGB='RGB')))
+        args = argparse.Namespace(camera=0, width=240, height=160, fps=30, fullscreen=False,
+                                  no_mirror=True, gesture_debug=False, sound=None)
+        with ExitStack() as mocks:
+            mocks.enter_context(patch.object(runtime.time, 'perf_counter', side_effect=[
+                0, 0, 4.1, 4.3, 5.01, 5.2, 5.6, 6.2, 6.91, 8.5, 8.7]))
+            for name in ('namedWindow', 'resizeWindow', 'destroyAllWindows', 'imshow'):
+                mocks.enter_context(patch.object(runtime.cv2, name))
+            mocks.enter_context(patch.object(runtime.cv2, 'getWindowProperty', return_value=1))
+            mocks.enter_context(patch.object(runtime.cv2, 'waitKey', side_effect=[0]*9+[ord('q')]))
+            mocks.enter_context(patch.object(runtime, 'VanishSound', return_value=sound))
+            mocks.enter_context(patch('builtins.print'))
+            with ExitStack() as resources:
+                self.assertEqual(runtime.run_ninja_camera(args, resources, 'clones', api), 0)
+        self.assertEqual(sound.play.call_count, 2)
+        self.assertFalse(np.array_equal(sent[4], frame))
+        final_log = render_substitution(frame, background, mask, load_log(), substitution_anchor(mask), 2)
+        np.testing.assert_array_equal(sent[-1], final_log)
+        self.assertFalse(np.any(np.all(sent[-1] == (50, 100, 205), axis=2)))
+        capture.release.assert_called_once()
+        virtual.close.assert_called_once()
+
     def exercise(self, fail=False):
         frame, background, mask = EffectTests.scene()
         capture, segmenter, tracker = Mock(), Mock(), Mock()
@@ -153,7 +179,7 @@ class CameraTests(unittest.TestCase):
                               BACKGROUND_SAMPLE_SECONDS=.55,
                               mp=SimpleNamespace(Image=Mock(), ImageFormat=SimpleNamespace(SRGB='RGB')))
         args = argparse.Namespace(camera=0, width=240, height=160, fps=30, fullscreen=False,
-                                  no_mirror=True, gesture_debug=False, sound=None, avatar=None)
+                                  no_mirror=True, gesture_debug=False, sound=None)
         with ExitStack() as mocks:
             mocks.enter_context(patch.object(runtime.time, 'perf_counter', side_effect=[0, 0, 4.1, 4.3, 4.6, 4.8, 5.3, 5.5, 5.7]))
             for name in ('namedWindow', 'resizeWindow', 'destroyAllWindows'):

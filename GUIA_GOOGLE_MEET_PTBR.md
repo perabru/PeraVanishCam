@@ -4,7 +4,7 @@
 
 1. Instale o [OBS Studio para Windows](https://obsproject.com/download), que inclui OBS Virtual Camera.
 2. Feche o OBS e as abas do Google Meet antes de abrir o PeraVanishCam.
-3. Abra `PeraVanishCam.exe` e escolha **2 — Naruto**, **3 — Clones das Sombras** ou **4 — Transformação**.
+3. Abra `PeraVanishCam.exe` e escolha **2 — Naruto** ou **3 — Clones das Sombras**.
 4. Saia do enquadramento durante 4 segundos. Quando o terminal informar que o fundo está pronto, volte.
 5. Abra o Meet e selecione **Configurações → Vídeo → Câmera → OBS Virtual Camera**.
 6. Mantenha o PeraVanishCam aberto durante a chamada. Neste modo, deixe o OBS fechado: o PeraVanishCam usa diretamente a câmera virtual.
@@ -44,7 +44,7 @@ Ao terminar, você pode voltar a saída de som do Windows para seu fone e o micr
 
 ## 3. Trocar o efeito sonoro
 
-O som toca ao ativar os modos **Naruto**, **Clones** e **Transformação**, por gesto ou teclado. Consulte o [guia dos novos selos](docs/GESTOS_NINJA.md). O modo Normal mantém o efeito visual de dissolução.
+O som toca ao ativar os efeitos de **tronco** e **clones**, por gesto ou teclado. Consulte o [guia dos novos selos](docs/GESTOS_NINJA.md). O modo Normal mantém o efeito visual de dissolução.
 
 1. Feche o PeraVanishCam.
 2. Coloque um arquivo de áudio chamado **som.mp3** ou **som.wav** na mesma pasta de `PeraVanishCam.exe`.
@@ -65,9 +65,11 @@ Para testar somente o som, sem abrir a câmera, dê dois cliques em **TESTAR_SOM
 
 O vídeo indicado para personalização é [Naruto disappear sound effect — Yaasos50](https://www.youtube.com/watch?v=isbyPXL9p3w). O áudio desse link não foi incorporado nesta versão: o download do conteúdo não ficou disponível no ambiente de preparação. O pacote mantém o som original e aceita o MP3/WAV externo para usar o arquivo desejado sem recompilar.
 
-## 4. Clones e transformação no Meet
+## 4. Clones e tronco no Meet
 
-Os dois novos efeitos também são enviados à **OBS Virtual Camera**. Selecione o modo 3 ou 4 no menu e siga o [guia ilustrado dos selos](docs/GESTOS_NINJA.md). A janela de ajuda aberta por H fica separada da imagem enviada à chamada.
+A fumaça dos clones e do tronco também é enviada à **OBS Virtual Camera**. Selecione o modo **3 — Clones das Sombras** para alternar os dois efeitos por gesto ou pelas teclas C/T e siga o [guia ilustrado dos selos](docs/GESTOS_NINJA.md). A janela de ajuda aberta por H fica separada da imagem enviada à chamada.
+
+A captura solicita 1280 × 720 a 30 FPS, conforme a webcam. A qualidade vista pelos participantes também depende da conexão e dos ajustes de vídeo da chamada. Veja [como ajustar a captura](docs/INSTALACAO_E_USO.md#qualidade-da-imagem).
 
 ## 5. Atalhos
 
@@ -76,8 +78,8 @@ Clique na janela da câmera antes de usar o teclado.
 | Tecla | Função |
 | --- | --- |
 | V | Ativar o efeito selecionado |
-| C / T | Clones / transformação nos modos 3 e 4 |
-| H | Abrir o guia visual nos modos 3 e 4 |
+| C / T | Clones / tronco no modo 3 |
+| H | Abrir o guia visual no modo 3 |
 | R | Reaparecer |
 | Espaço | Capturar o fundo novamente; saia do quadro por 4 segundos |
 | F | Alternar tela cheia |

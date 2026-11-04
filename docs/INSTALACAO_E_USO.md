@@ -20,7 +20,7 @@ O pacote é portátil. Para mudar de pasta, copie a pasta extraída inteira. Par
 ## Primeira execução
 
 1. Feche outros aplicativos que estejam utilizando sua webcam.
-2. Escolha **Normal**, **Naruto**, **Clones das Sombras** ou **Transformação** no menu.
+2. Escolha **1 — Normal**, **2 — Naruto** ou **3 — Clones das Sombras** no menu.
 3. Saia completamente do enquadramento durante 4 segundos.
 4. Aguarde a mensagem **Fundo pronto** no terminal.
 5. Volte para a câmera, mantendo o cenário e a iluminação estáveis.
@@ -31,17 +31,17 @@ O pacote é portátil. Para mudar de pasta, copie a pasta extraída inteira. Par
 
 ## Novos jutsus
 
-Abra os modos **3 — Clones das Sombras** ou **4 — Transformação**. Segure o selo por 0,65 segundo e abaixe as mãos antes de repetir. Use **C** para criar dois clones ao vivo, **T** para transformar na personagem, **R** para voltar e **H** para ver o guia.
+Abra o modo **3 — Clones das Sombras**. Faça o selo cruzado para criar dois clones ao vivo ou o selo do Tigre para desaparecer em um tronco. Segure o selo por 0,65 segundo e abaixe as mãos antes de repetir. Os dois efeitos surgem com fumaça animada; ela se dissipa, enquanto os clones continuam ao vivo ou o tronco cai e permanece.
 
-**[Guia ilustrado e instruções dos selos](GESTOS_NINJA.md).** A transformação usa um avatar feminino original que acompanha sua posição.
+Use **C** para clones, **T** para tronco, **R** para voltar e **H** para ver o **[guia ilustrado dos selos](GESTOS_NINJA.md)**.
 
 ## Teclas
 
 | Tecla | Função |
 | --- | --- |
 | V | Ativar o efeito sem precisar fazer o gesto |
-| C / T | Clones / transformação nos modos 3 e 4 |
-| H | Guia dos novos selos, nos modos 3 e 4 |
+| C / T | Clones / tronco no modo 3 |
+| H | Guia dos selos, no modo 3 |
 | R | Reaparecer e remover o tronco |
 | Espaço | Capturar novamente o fundo |
 | F | Alternar tela cheia |
@@ -53,7 +53,7 @@ Clique na janela da câmera antes de usar o teclado. Ao capturar novamente o fun
 
 1. Feche o aplicativo.
 2. Coloque um arquivo **som.mp3** ou **som.wav** ao lado de **PeraVanishCam.exe**.
-3. Abra o aplicativo e escolha Naruto, Clones ou Transformação.
+3. Abra o aplicativo e escolha Naruto ou Clones.
 4. Pressione V para conferir o efeito com o som.
 
 O MP3 tem prioridade se os dois arquivos estiverem presentes. Para voltar ao áudio padrão, remova ou renomeie os arquivos externos. Use **TESTAR_SOM.bat** para ouvir o som sem abrir a câmera.
@@ -71,6 +71,22 @@ O arquivo de áudio exato de um link do YouTube não é baixado automaticamente 
 
 Siga o [guia completo](../GUIA_GOOGLE_MEET_PTBR.md). Ele explica como instalar a câmera virtual do OBS e misturar o efeito sonoro com sua voz pelo Voicemeeter Banana.
 
+## Qualidade da imagem
+
+A captura solicita **1280 × 720 a 30 FPS** por padrão. A resolução efetiva depende da webcam e do driver. O recorte usa bordas mais suaves, e o redimensionamento dos clones e do tronco preserva os detalhes e a transparência.
+
+Para obter uma imagem melhor, ilumine seu rosto e suas mãos pela frente, mantenha a câmera parada e capture novamente o fundo depois de mudar a luz. Para solicitar Full HD, use uma webcam compatível:
+
+```powershell
+.\PeraVanishCam.exe --width 1920 --height 1080 --fps 30
+```
+
+Se o vídeo ficar lento, reduza a resolução:
+
+```powershell
+.\PeraVanishCam.exe --width 960 --height 540 --fps 30
+```
+
 ## Resolver problemas comuns
 
 | Problema | O que fazer |
@@ -87,7 +103,8 @@ Outras opções:
 
 ```powershell
 .\PeraVanishCam.exe --camera 1
-.\PeraVanishCam.exe --width 1280 --height 720 --fps 30
+.\PeraVanishCam.exe --mode clones
+.\PeraVanishCam.exe --mode substitution
 .\PeraVanishCam.exe --no-virtual-camera
 .\PeraVanishCam.exe --gesture-debug
 .\PeraVanishCam.exe --help

@@ -1,121 +1,113 @@
-"""Live shadow clones and an original female anime transformation avatar."""
+"""Live shadow clones with clean cutout scaling and a smoke entrance."""
 from __future__ import annotations
 
-from pathlib import Path
-import sys
 import cv2
 import numpy as np
 
 try:
-    from .naruto_effect import _smoke_layer
+    from .naruto_effect import EFFECT_SECONDS, _smoke_layer
 except ImportError:
-    from naruto_effect import _smoke_layer
+    from naruto_effect import EFFECT_SECONDS, _smoke_layer
 
-AVATAR_PATH = Path(__file__).resolve().parent / 'assets' / 'transformation_avatar.png'
-BURST_SECONDS = 1.45
+BURST_SECONDS = EFFECT_SECONDS
 
 
-def load_avatar(path: Path | None = None) -> np.ndarray:
-    if path is None:
-        folder = Path(sys.executable).resolve().parent if getattr(sys, "frozen", False) else Path(__file__).resolve().parent
-        external = folder / "personagem.png"
-        path = external if external.is_file() else AVATAR_PATH
-    sprite = cv2.imread(str(path), cv2.IMREAD_UNCHANGED)
-    if sprite is None or sprite.ndim != 3 or sprite.shape[2] != 4:
-        raise RuntimeError('Personagem nao encontrada ou sem transparencia. Use uma imagem PNG RGBA.')
-    if sprite[:, :, 3].max() < 20 or sprite[:, :, 3].min() >= 250:
-        raise RuntimeError('A personagem precisa ter fundo transparente e pixels visiveis.')
-    # Crop only at render time so the supplied PNG is preserved unchanged.
-    visible = cv2.findNonZero((sprite[:, :, 3] > 16).astype(np.uint8))
-    x, y, w, h = cv2.boundingRect(visible)
-    return sprite[y:y+h, x:x+w].copy()
+def _clean_alpha(mask: np.ndarray) -> np.ndarray:
+    return np.clip(np.nan_to_num(mask, nan=0.0, posinf=1.0, neginf=0.0), 0, 1).astype(np.float32)
 
 
 def person_bounds(mask: np.ndarray) -> tuple[int, int, int, int] | None:
-    count, _, stats, _ = cv2.connectedComponentsWithStats((mask > .45).astype(np.uint8))
+    """Keep the main person and nearby detached hands, excluding tiny noise."""
+    alpha = _clean_alpha(mask)
+    count, _, stats, _ = cv2.connectedComponentsWithStats((alpha > .20).astype(np.uint8))
     if count <= 1:
         return None
-    i = 1 + int(np.argmax(stats[1:, cv2.CC_STAT_AREA]))
-    x, y, w, h, area = stats[i]
+    largest = 1 + int(np.argmax(stats[1:, cv2.CC_STAT_AREA]))
+    x, y, w, h, area = stats[largest]
     if area < max(25, mask.size * .002):
         return None
-    return int(x), int(y), int(w), int(h)
+    # Segmentation may briefly disconnect a raised hand from the torso. Include
+    # nearby substantial components instead of cutting the hand from each clone.
+    left, top, right, bottom = int(x), int(y), int(x+w), int(y+h)
+    reach_x, reach_y = max(12, int(w*.6)), max(12, int(h*.30))
+    for component in stats[1:]:
+        px, py, pw, ph, pixels = map(int, component)
+        if pixels < max(6, int(mask.size*.00008)):
+            continue
+        if px+pw >= x-reach_x and px <= x+w+reach_x and py+ph >= y-reach_y and py <= y+h+reach_y:
+            left, top = min(left, px), min(top, py)
+            right, bottom = max(right, px+pw), max(bottom, py+ph)
+    return left, top, right-left, bottom-top
 
 
-def _paste(output: np.ndarray, rgb: np.ndarray, alpha: np.ndarray, x: int, y: int, opacity=1.0) -> None:
-    h, w = rgb.shape[:2]
+def _resize_cutout(rgb: np.ndarray, alpha: np.ndarray,
+                   size: tuple[int, int]) -> tuple[np.ndarray, np.ndarray]:
+    """Resize premultiplied color and coverage together to avoid color fringes."""
+    alpha = _clean_alpha(alpha)
+    premultiplied = rgb.astype(np.float32)*alpha[:, :, None]
+    method = cv2.INTER_AREA if size[0] <= rgb.shape[1] and size[1] <= rgb.shape[0] else cv2.INTER_LINEAR
+    color = cv2.resize(premultiplied, size, interpolation=method)
+    coverage = cv2.resize(alpha, size, interpolation=method)
+    return color, np.clip(coverage, 0, 1)
+
+
+def _paste_premultiplied(output: np.ndarray, color: np.ndarray, alpha: np.ndarray,
+                         x: int, y: int, opacity: float = 1.0) -> None:
+    h, w = color.shape[:2]
     left, top = max(0, x), max(0, y)
     right, bottom = min(output.shape[1], x+w), min(output.shape[0], y+h)
-    if left >= right or top >= bottom:
+    if left >= right or top >= bottom or opacity <= 0:
         return
     crop = np.s_[top-y:bottom-y, left-x:right-x]
-    a = np.clip(alpha[crop] * opacity, 0, 1)[:, :, None]
+    strength = float(np.clip(opacity, 0, 1))
+    a = alpha[crop][:, :, None]
     target = output[top:bottom, left:right]
-    target[:] = np.clip(rgb[crop].astype(np.float32) * a + target * (1-a), 0, 255).astype(np.uint8)
+    blended = color[crop]*strength + target.astype(np.float32)*(1-a*strength)
+    target[:] = np.rint(np.clip(blended, 0, 255)).astype(np.uint8)
 
 
-def _smoke(output: np.ndarray, x: float, y: float, size: float, age: float) -> None:
-    if age >= BURST_SECONDS:
-        return
-    anchor = (int(x), int(y), max(24, int(size)))
-    _smoke_layer(output, anchor, max(.02, age), False)
-    _smoke_layer(output, anchor, max(.02, age), True)
+def _paste(output: np.ndarray, rgb: np.ndarray, alpha: np.ndarray,
+           x: int, y: int, opacity: float = 1.0) -> None:
+    coverage = _clean_alpha(alpha)
+    _paste_premultiplied(output, rgb.astype(np.float32)*coverage[:, :, None], coverage, x, y, opacity)
 
 
-def render_clones(frame: np.ndarray, background: np.ndarray, mask: np.ndarray, age: float) -> np.ndarray:
+def _smoke(output: np.ndarray, anchor: tuple[int, int, int], age: float,
+           foreground: bool) -> None:
+    if 0 <= age < BURST_SECONDS:
+        _smoke_layer(output, anchor, max(.02, age), foreground)
+
+
+def render_clones(frame: np.ndarray, background: np.ndarray, mask: np.ndarray,
+                   age: float) -> np.ndarray:
     bounds = person_bounds(mask)
     if bounds is None:
         return frame.copy()
     x, y, w, h = bounds
-    pad = 3
+    pad = max(3, round(min(frame.shape[:2])*.006))
     x0, y0 = max(0, x-pad), max(0, y-pad)
     x1, y1 = min(frame.shape[1], x+w+pad), min(frame.shape[0], y+h+pad)
-    person, alpha = frame[y0:y1, x0:x1], np.clip(mask[y0:y1, x0:x1], 0, 1)
+    person, alpha = frame[y0:y1, x0:x1], _clean_alpha(mask[y0:y1, x0:x1])
     canvas = background.copy()
-    scale = min(.80, frame.shape[1] * .33 / max(1, person.shape[1]))
-    target_w, target_h = max(1, round(person.shape[1]*scale)), max(1, round(person.shape[0]*scale))
-    clone = cv2.resize(person, (target_w, target_h), interpolation=cv2.INTER_AREA)
-    clone_alpha = cv2.resize(alpha, (target_w, target_h), interpolation=cv2.INTER_LINEAR)
-    opacity = min(1.0, max(0.0, (age-.05)/.28))
-    bottom = min(frame.shape[0], y1)
-    anchors = []
-    for ratio in (.19, .81):
+    # Never upscale a camera face. More of the native detail is retained at
+    # 86% size, with a width cap leaving room for the original in the center.
+    scale = min(.86, frame.shape[1]*.33/max(1, person.shape[1]))
+    target_w = max(1, round(person.shape[1]*scale))
+    target_h = max(1, round(person.shape[0]*scale))
+    clone, clone_alpha = _resize_cutout(person, alpha, (target_w, target_h))
+    opacity = float(np.clip((age-.08)/.30, 0, 1))
+    placements = []
+    for ratio in (.18, .82):
         cx = int(frame.shape[1]*ratio)
         left = int(np.clip(cx-target_w//2, 0, max(0, frame.shape[1]-target_w)))
-        top = max(0, bottom-target_h)
-        _paste(canvas, clone, clone_alpha, left, top, opacity)
-        anchors.append((left+target_w/2, top+target_h/2, target_h*.65))
-    _paste(canvas, frame, np.clip(mask, 0, 1), 0, 0)
-    for cx, cy, size in anchors:
-        _smoke(canvas, cx, cy, size, age)
+        top = max(0, y1-target_h)
+        anchor = (left+target_w//2, top+round(target_h*.50), max(24, round(target_h*.72)))
+        placements.append((left, top, anchor))
+        _smoke(canvas, anchor, age, foreground=False)
+        _paste_premultiplied(canvas, clone, clone_alpha, left, top, opacity)
+    # The original retains its exact native colors and texture; only the alpha
+    # matte is improved. No face smoothing, sharpening, or generated pixels.
+    _paste(canvas, person, alpha, x0, y0)
+    for _, _, anchor in placements:
+        _smoke(canvas, anchor, age, foreground=True)
     return canvas
-
-
-def render_transformation(frame: np.ndarray, background: np.ndarray, mask: np.ndarray,
-                          sprite: np.ndarray, age: float,
-                          cache: dict[int, np.ndarray] | None = None) -> np.ndarray:
-    bounds = person_bounds(mask)
-    if bounds is None:
-        return background.copy()
-    x, y, w, h = bounds
-    output = background.copy()
-    target_h = max(24, min(frame.shape[0], int(h*1.05)))
-    # Quantize sizes and bound the cache so motion cannot grow it indefinitely.
-    target_h = max(24, (target_h//8)*8)
-    target_w = max(1, round(target_h*sprite.shape[1]/sprite.shape[0]))
-    sized = cache.get(target_h) if cache is not None else None
-    if sized is None:
-        sized = cv2.resize(sprite, (target_w, target_h), interpolation=cv2.INTER_AREA)
-        if cache is not None:
-            if len(cache) >= 16:
-                cache.clear()
-            cache[target_h] = sized
-    left = int(np.clip(x+w/2-target_w/2, 0, max(0, frame.shape[1]-target_w)))
-    top = int(np.clip(y+h-target_h, 0, max(0, frame.shape[0]-target_h)))
-    reveal = min(1.0, max(0.0, (age-.06)/.24))
-    _paste(output, sized[:, :, :3], sized[:, :, 3].astype(np.float32)/255, left, top, reveal)
-    if age < .30:
-        original_alpha = np.clip(mask, 0, 1) * (1-reveal)
-        _paste(output, frame, original_alpha, 0, 0)
-    _smoke(output, left+target_w/2, top+target_h/2, target_h*.68, age)
-    return output

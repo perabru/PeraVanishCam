@@ -9,6 +9,7 @@ from local_app import vanish_cam as app
 from local_app.naruto_effect import (
     EFFECT_SECONDS, falling_log_anchor, joined_hands_from_landmarks,
     landed_log_anchor, load_log, overlay_log, render_substitution, substitution_anchor,
+    _smoke_layer,
 )
 from local_app.test_video_output import arguments
 
@@ -116,6 +117,66 @@ class EffectTests(unittest.TestCase):
         expected = background.copy()
         overlay_log(expected, load_log(), floor)
         np.testing.assert_array_equal(output, expected)
+
+
+class SmokeQualityTests(unittest.TestCase):
+    @staticmethod
+    def smoke(age, anchor=(200, 160, 90), shape=(360, 420, 3)):
+        output = np.full(shape, 28, np.uint8)
+        _smoke_layer(output, anchor, age, False)
+        _smoke_layer(output, anchor, age, True)
+        return output
+
+    def test_dense_soft_smoke_animates_and_fades_completely(self):
+        peak = self.smoke(.30)
+        later = self.smoke(.75)
+        faded = self.smoke(EFFECT_SECONDS-.03)
+        self.assertGreater(np.count_nonzero(peak[:, :, 0] > 70), 3000)
+        self.assertGreater(np.unique(peak[:, :, 0]).size, 80)
+        self.assertFalse(np.array_equal(peak, later))
+        self.assertLess(np.abs(faded.astype(float)-28).sum(),
+                        np.abs(peak.astype(float)-28).sum()*.05)
+        for age in (-1, 0, EFFECT_SECONDS, EFFECT_SECONDS+1, float('nan')):
+            np.testing.assert_array_equal(self.smoke(age), np.full_like(peak, 28))
+        np.testing.assert_array_equal(peak, self.smoke(.30))
+
+    def test_smoke_clips_safely_at_every_frame_edge_and_large_sizes(self):
+        for anchor in ((-20, 20, 90), (410, 350, 90), (210, -30, 90),
+                       (600, 600, 20), (200, 160, 3000), (200, 160, 0)):
+            image = self.smoke(.4, anchor)
+            self.assertEqual(image.shape, (360, 420, 3))
+            self.assertEqual(image.dtype, np.uint8)
+        image = self.smoke(.4, (70, 100, 35))
+        np.testing.assert_array_equal(image[300:, 300:], np.full((60, 120, 3), 28, np.uint8))
+
+    def test_hd_smoke_preserves_resolution_and_produces_smooth_boundaries(self):
+        image = self.smoke(.4, (640, 330, 340), (720, 1280, 3))
+        self.assertEqual(image.shape, (720, 1280, 3))
+        values = image[:, :, 0]
+        self.assertGreater(np.count_nonzero(values > 100), 60000)
+        self.assertGreater(np.unique(values).size, 100)
+        np.testing.assert_array_equal(image[0, 0], [28, 28, 28])
+
+    def test_log_resize_does_not_leak_invisible_border_colors(self):
+        sprite = np.full((8, 8, 4), (0, 255, 0, 0), np.uint8)
+        sprite[2:6, 2:6] = (220, 220, 220, 255)
+        for height in (5, 31):
+            image = np.full((60, 60, 3), 35, np.uint8)
+            overlay_log(image, sprite, (30, 30, height))
+            np.testing.assert_array_equal(image[:, :, 0], image[:, :, 1])
+            np.testing.assert_array_equal(image[:, :, 1], image[:, :, 2])
+            self.assertGreater(int(image.max()), 100)
+
+    def test_log_size_cache_is_bounded_and_cached_pixels_match(self):
+        sprite = load_log()
+        cache = {}
+        for height in range(10, 50):
+            output = np.zeros((80, 80, 3), np.uint8)
+            overlay_log(output, sprite, (40, 40, height), cache=cache)
+            self.assertLessEqual(len(cache), 24)
+        uncached = np.zeros((80, 80, 3), np.uint8)
+        overlay_log(uncached, sprite, (40, 40, 49))
+        np.testing.assert_array_equal(output, uncached)
 
 
 class MenuTests(unittest.TestCase):

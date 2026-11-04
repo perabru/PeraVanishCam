@@ -25,12 +25,14 @@ try:
         load_log, overlay_log, render_substitution, substitution_anchor,
     )
     from .vanish_sound import SOUND_PATH, VanishSound
+    from .video_quality import refine_person_mask
 except ImportError:
     from naruto_effect import (
         EFFECT_SECONDS, joined_hands_from_landmarks, landed_log_anchor,
         load_log, overlay_log, render_substitution, substitution_anchor,
     )
     from vanish_sound import SOUND_PATH, VanishSound
+    from video_quality import refine_person_mask
 
 
 APP_DIR = Path(__file__).resolve().parent
@@ -77,11 +79,11 @@ def positive_fps(value: str) -> float:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Normal, Naruto, Clones das Sombras e Transformacao para sua webcam."
+        description="Desaparecimento, clones ao vivo e substituicao em tronco com fumaca."
     )
     parser.add_argument("--camera", type=int, default=0, help="Numero da webcam (0 = primeira camera)")
-    parser.add_argument("--width", type=int, default=960, help="Largura do video")
-    parser.add_argument("--height", type=int, default=540, help="Altura do video")
+    parser.add_argument("--width", type=int, default=1280, help="Largura solicitada a webcam (padrao: 1280)")
+    parser.add_argument("--height", type=int, default=720, help="Altura solicitada a webcam (padrao: 720)")
     parser.add_argument(
         "--fullscreen", action="store_true", help="Abrir em tela cheia"
     )
@@ -99,8 +101,8 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--virtual-device", help="Nome do dispositivo de camera virtual")
     parser.add_argument(
-        "--mode", choices=("normal", "naruto", "clones", "transform"),
-        help="Abrir diretamente normal, naruto, clones ou transform",
+        "--mode", choices=("normal", "naruto", "clones", "substitution"),
+        help="Abrir diretamente normal, naruto (tronco) ou clones; substitution tambem abre o tronco",
     )
     parser.add_argument(
         "--gesture-debug", action="store_true",
@@ -108,7 +110,6 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--self-test", action="store_true", help=argparse.SUPPRESS)
     parser.add_argument("--som", dest="sound", type=Path, help="Arquivo MP3 ou WAV para os efeitos ninja")
-    parser.add_argument("--personagem", dest="avatar", type=Path, help="PNG transparente para a transformacao")
     parser.add_argument("--teste-som", action="store_true", help="Tocar o efeito uma vez, sem abrir a camera")
     return parser.parse_args()
 
@@ -117,7 +118,7 @@ def choose_mode() -> str | None:
     """Simple keyboard/mouse menu shown before the clean camera feed."""
     title = "PeraVanishCam - Escolha o efeito"
     selected = [None]
-    window = np.zeros((610, 760, 3), dtype=np.uint8)
+    window = np.zeros((495, 760, 3), dtype=np.uint8)
     window[:] = (26, 29, 34)
     cv2.putText(window, "PERAVANISHCAM", (65, 65),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.85, (236, 239, 242), 2, cv2.LINE_AA)
@@ -125,7 +126,6 @@ def choose_mode() -> str | None:
         ("normal", "1  NORMAL VANISH", "Gesto em V  /  dissolver imagem", 120),
         ("naruto", "2  NARUTO VANISH", "Maos juntas  /  tronco e fumaca", 235),
         ("clones", "3  CLONES DAS SOMBRAS", "Selo cruzado (+)  /  clones ao vivo", 350),
-        ("transform", "4  TRANSFORMACAO", "Selo do Tigre  /  personagem feminina", 465),
     )
     for mode, heading, detail, top in buttons:
         cv2.rectangle(window, (65, top), (695, top + 94), (48, 54, 62), -1, cv2.LINE_AA)
@@ -153,8 +153,6 @@ def choose_mode() -> str | None:
                 selected[0] = "naruto"
             elif key == ord("3"):
                 selected[0] = "clones"
-            elif key == ord("4"):
-                selected[0] = "transform"
             elif key in (ord("q"), 27):
                 return None
             if cv2.getWindowProperty(title, cv2.WND_PROP_VISIBLE) < 1:
@@ -193,7 +191,9 @@ def open_virtual_camera(args: argparse.Namespace, width: int, height: int):
 
 def send_virtual_frame(camera, frame: np.ndarray) -> None:
     if frame.shape[:2] != (camera.height, camera.width):
-        frame = cv2.resize(frame, (camera.width, camera.height), interpolation=cv2.INTER_LINEAR)
+        shrinking = camera.width <= frame.shape[1] and camera.height <= frame.shape[0]
+        frame = cv2.resize(frame, (camera.width, camera.height),
+                           interpolation=cv2.INTER_AREA if shrinking else cv2.INTER_CUBIC)
     camera.send(np.ascontiguousarray(frame))
 
 
@@ -245,6 +245,9 @@ def open_camera(index: int, width: int, height: int) -> cv2.VideoCapture:
             f"Webcam {index} indisponivel. Feche outros aplicativos ou tente --camera 1."
         )
 
+    # Request HD from the actual device, keeping whatever size it supports.
+    if platform.system() == "Windows":
+        capture.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*"MJPG"))
     capture.set(cv2.CAP_PROP_FRAME_WIDTH, width)
     capture.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
     capture.set(cv2.CAP_PROP_BUFFERSIZE, 1)
@@ -343,9 +346,10 @@ def person_mask(
     if not result.confidence_masks:
         return np.zeros((height, width), dtype=np.float32)
     raw = np.squeeze(result.confidence_masks[0].numpy_view()).astype(np.float32)
-    resized = cv2.resize(raw, (width, height), interpolation=cv2.INTER_LINEAR)
-    resized = cv2.GaussianBlur(resized, (0, 0), sigmaX=2.2, sigmaY=2.2)
-    return np.clip((resized - 0.12) / 0.68, 0.0, 1.0)
+    frame = np.ascontiguousarray(image.numpy_view()[:, :, :3][:, :, ::-1])
+    if frame.shape[:2] != (height, width):
+        frame = cv2.resize(frame, (width, height), interpolation=cv2.INTER_AREA)
+    return refine_person_mask(frame, raw)
 
 
 def alpha_composite(person: np.ndarray, background: np.ndarray, alpha: np.ndarray) -> np.ndarray:
@@ -707,8 +711,10 @@ def run() -> int:
     mode = args.mode or choose_mode()
     if mode is None:
         return 0
+    if mode == "substitution":
+        mode = "naruto"
     with ExitStack() as resources:
-        if mode in ("clones", "transform"):
+        if mode == "clones":
             try:
                 from .ninja_runtime import run_ninja_camera
             except ImportError:
@@ -767,6 +773,7 @@ def run_camera(args: argparse.Namespace, resources: ExitStack, mode: str) -> int
 
             height, width = camera_frame.shape[:2]
             if not virtual_camera_initialized:
+                print(f"[PeraVanishCam] Captura da webcam: {width}x{height}.")
                 virtual_camera = open_virtual_camera(args, width, height)
                 virtual_camera_initialized = True
                 if virtual_camera is not None:

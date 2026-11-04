@@ -74,7 +74,7 @@ def _segments_distance(a, b, c, d) -> float:
 
 
 def classify_hand_seal(hands, width: int, height: int) -> str | None:
-    """Crossed two-finger seal -> clones; joined upright two-finger seal -> transform.
+    """Crossed two-finger seal -> clones; joined upright two-finger seal -> substitution.
 
     These are geometric approximations adapted to two-hand MediaPipe tracking,
     not a classifier trained to identify every Naruto hand sign.
@@ -97,7 +97,7 @@ def classify_hand_seal(hands, width: int, height: int) -> str | None:
         return "clones"
     if (alignment > 0.74 and tip_distance < size * 0.95
             and max(a.pair_gap, b.pair_gap) < 0.55):
-        return "transform"
+        return "substitution"
     return None
 
 
